@@ -1,6 +1,6 @@
 "use client";
 
-import Header from "@/components/TestatorHeader";
+import TestatorHeader from "@/components/TestatorHeader";
 import { useAccount } from "wagmi";
 
 export default function TestatorLogin() {
@@ -8,7 +8,7 @@ export default function TestatorLogin() {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <Header />
+      <TestatorHeader />
 
       <main className="flex flex-col items-center justify-center p-6 mt-20">
         <h1 className="text-3xl font-semibold mb-8">Testator Login</h1>

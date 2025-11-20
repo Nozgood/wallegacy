@@ -1,11 +1,7 @@
-import React from 'react'
+import NotaryHeader from "@/components/NotaryHeader";
 
-const page = () => {
-  return (
-    <div>
-     notary login 
-    </div>
-  )
+export default function NotaryPage() {
+  return <>
+  <NotaryHeader />
+  </>
 }
-
-export default page
