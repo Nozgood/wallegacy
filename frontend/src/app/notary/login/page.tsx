@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import NotaryHeader from "@/components/NotaryHeader";
+import { loginNotary } from "./actions";
 
 export default function NotaireLoginPage() {
     const router = useRouter() 
@@ -10,13 +11,14 @@ export default function NotaireLoginPage() {
     const [password, setPassword] = useState("");
 
   // handleSubmit will be use in the future to call notary auth API
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     console.log("Identifier:", identifier);
     console.log("Password:", password);
 
-   router.push("/notary") 
+    await loginNotary(identifier, password);
+   router.push("/notary/space") 
   };
 
   return ( <>
