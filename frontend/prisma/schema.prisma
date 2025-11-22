@@ -1,0 +1,21 @@
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "./generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model SuccessionPlan {
+  id Int @id @default(autoincrement())
+  clientAddress String @unique
+  notaryName String 
+  status String
+  createdAt DateTime
+  updatedAt DateTime
+  deletedAt DateTime 
+}
