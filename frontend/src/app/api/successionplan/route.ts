@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '../../../../lib/prisma';
-import { SuccessionPlanCreateInput } from '../../../../prisma/generated/prisma/models';
+import { SuccessionPlanCreateInput } from '../../../../prisma/generated/models';
 
 // type of Create Succession Plan request
 // export type SuccessionPlanCreateInput = {
@@ -19,9 +19,9 @@ export async function POST(request: NextRequest) {
     body.status = "DRAFT"
 
     const isoDate = new Date().toISOString();
-    body.createdAt = isoDate
-    body.updatedAt = isoDate
-    body.deletedAt = isoDate
+    // body.createdAt = isoDate
+    // body.updatedAt = isoDate
+    // body.deletedAt = isoDate
     if (!body.clientAddress) {
       return NextResponse.json(
         { error: 'Missing required fields' },

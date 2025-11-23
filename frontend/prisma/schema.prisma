@@ -2,12 +2,11 @@
 
 generator client {
   provider = "prisma-client"
-  output   = "./generated/prisma"
+  output = "./generated"
 }
 
 datasource db {
   provider = "sqlite"
-  url      = env("DATABASE_URL")
 }
 
 model SuccessionPlan {
@@ -15,7 +14,7 @@ model SuccessionPlan {
   clientAddress String @unique
   notaryName String 
   status String
-  createdAt DateTime
-  updatedAt DateTime
-  deletedAt DateTime 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime? 
 }
