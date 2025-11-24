@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '../../../../lib/prisma';
-import { SuccessionPlanCreateInput } from '../../../../prisma/generated/models';
+import { SuccessionPlanCreateInput, TestatorCreateInput } from '../../../../prisma/generated/models';
 
 // type of Create Succession Plan request
 // export type SuccessionPlanCreateInput = {
@@ -12,17 +12,16 @@ import { SuccessionPlanCreateInput } from '../../../../prisma/generated/models';
 //   deletedAt: Date | string
 // }
 
+
 export async function POST(request: NextRequest) {
   try {
-    const body: SuccessionPlanCreateInput = await request.json();
-    body.notaryName = "tetedenoeuds"
-    body.status = "DRAFT"
+    const body: TestatorCreateInput = await request.json();
 
     const isoDate = new Date().toISOString();
     // body.createdAt = isoDate
     // body.updatedAt = isoDate
     // body.deletedAt = isoDate
-    if (!body.clientAddress) {
+    if (!body.publicKey) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -30,10 +29,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Create succession plan
-    const successionPlan = await prisma.successionPlan.create({data: body});
+    const successionPlan = await prisma.testator.create({data: body});
     return NextResponse.json(successionPlan, { status: 201 });
   } catch (error) {
-    console.error('Error creating succession plan:', error);
+    console.error('Error creating testator account:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

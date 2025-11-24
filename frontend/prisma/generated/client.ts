@@ -29,8 +29,8 @@ export * from "./enums"
  * @example
  * ```
  * const prisma = new PrismaClient()
- * // Fetch zero or more SuccessionPlans
- * const successionPlans = await prisma.successionPlan.findMany()
+ * // Fetch zero or more Notaries
+ * const notaries = await prisma.notary.findMany()
  * ```
  * 
  * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client).
@@ -39,6 +39,16 @@ export const PrismaClient = $Class.getPrismaClientClass()
 export type PrismaClient<LogOpts extends Prisma.LogLevel = never, OmitOpts extends Prisma.PrismaClientOptions["omit"] = Prisma.PrismaClientOptions["omit"], ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = $Class.PrismaClient<LogOpts, OmitOpts, ExtArgs>
 export { Prisma }
 
+/**
+ * Model Notary
+ * 
+ */
+export type Notary = Prisma.NotaryModel
+/**
+ * Model Testator
+ * 
+ */
+export type Testator = Prisma.TestatorModel
 /**
  * Model SuccessionPlan
  * 

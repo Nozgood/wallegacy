@@ -51,6 +51,8 @@ export const AnyNull = runtime.AnyNull
 
 
 export const ModelName = {
+  Notary: 'Notary',
+  Testator: 'Testator',
   SuccessionPlan: 'SuccessionPlan'
 } as const
 
@@ -67,10 +69,26 @@ export const TransactionIsolationLevel = {
 export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
 
 
+export const NotaryScalarFieldEnum = {
+  id: 'id',
+  username: 'username'
+} as const
+
+export type NotaryScalarFieldEnum = (typeof NotaryScalarFieldEnum)[keyof typeof NotaryScalarFieldEnum]
+
+
+export const TestatorScalarFieldEnum = {
+  id: 'id',
+  publicKey: 'publicKey'
+} as const
+
+export type TestatorScalarFieldEnum = (typeof TestatorScalarFieldEnum)[keyof typeof TestatorScalarFieldEnum]
+
+
 export const SuccessionPlanScalarFieldEnum = {
   id: 'id',
-  clientAddress: 'clientAddress',
-  notaryName: 'notaryName',
+  testatorPublicKey: 'testatorPublicKey',
+  notaryUsername: 'notaryUsername',
   status: 'status',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',

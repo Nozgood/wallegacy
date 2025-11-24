@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 // TODO: make the token more complex and decode it to authenticate correctly the user
 function proxy(req: NextRequest) {
     console.log("notary middleware executing")
-    const token = req.cookies.get("notary_token")?.value
+    const token = req.cookies.get("notary_id")?.value
    
     if (req.nextUrl.pathname.startsWith("/notary/login") && token) {
         return NextResponse.redirect(new URL("/notary/space", req.url))

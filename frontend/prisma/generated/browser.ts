@@ -18,6 +18,16 @@ export { Prisma }
 export * as $Enums from './enums'
 export * from './enums';
 /**
+ * Model Notary
+ * 
+ */
+export type Notary = Prisma.NotaryModel
+/**
+ * Model Testator
+ * 
+ */
+export type Testator = Prisma.TestatorModel
+/**
  * Model SuccessionPlan
  * 
  */

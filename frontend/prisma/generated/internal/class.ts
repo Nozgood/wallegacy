@@ -20,7 +20,7 @@ const config: runtime.GetPrismaClientConfig = {
   "clientVersion": "7.0.0",
   "engineVersion": "0c19ccc313cf9911a90d99d2ac2eb0280c76c513",
   "activeProvider": "sqlite",
-  "inlineSchema": "// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\ngenerator client {\n  provider = \"prisma-client\"\n  output   = \"./generated\"\n}\n\ndatasource db {\n  provider = \"sqlite\"\n}\n\nmodel SuccessionPlan {\n  id            Int       @id @default(autoincrement())\n  clientAddress String    @unique\n  notaryName    String\n  status        String\n  createdAt     DateTime  @default(now())\n  updatedAt     DateTime  @updatedAt\n  deletedAt     DateTime?\n}\n",
+  "inlineSchema": "// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\ngenerator client {\n  provider = \"prisma-client\"\n  output   = \"./generated\"\n}\n\ndatasource db {\n  provider = \"sqlite\"\n}\n\nmodel Notary {\n  id       Int    @id @default(autoincrement())\n  username String @unique\n\n  successionPlans SuccessionPlan[]\n}\n\nmodel Testator {\n  id        Int    @id @default(autoincrement())\n  publicKey String @unique\n\n  successionPlan SuccessionPlan?\n}\n\nmodel SuccessionPlan {\n  id                Int       @id @default(autoincrement())\n  testatorPublicKey String    @unique\n  notaryUsername    String\n  status            String\n  createdAt         DateTime  @default(now())\n  updatedAt         DateTime  @updatedAt\n  deletedAt         DateTime?\n\n  testator Testator @relation(fields: [testatorPublicKey], references: [publicKey])\n  notary   Notary   @relation(fields: [notaryUsername], references: [username])\n}\n",
   "runtimeDataModel": {
     "models": {},
     "enums": {},
@@ -28,7 +28,7 @@ const config: runtime.GetPrismaClientConfig = {
   }
 }
 
-config.runtimeDataModel = JSON.parse("{\"models\":{\"SuccessionPlan\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"clientAddress\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"notaryName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"status\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"deletedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
+config.runtimeDataModel = JSON.parse("{\"models\":{\"Notary\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"username\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"successionPlans\",\"kind\":\"object\",\"type\":\"SuccessionPlan\",\"relationName\":\"NotaryToSuccessionPlan\"}],\"dbName\":null},\"Testator\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"publicKey\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"successionPlan\",\"kind\":\"object\",\"type\":\"SuccessionPlan\",\"relationName\":\"SuccessionPlanToTestator\"}],\"dbName\":null},\"SuccessionPlan\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"testatorPublicKey\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"notaryUsername\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"status\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"deletedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"testator\",\"kind\":\"object\",\"type\":\"Testator\",\"relationName\":\"SuccessionPlanToTestator\"},{\"name\":\"notary\",\"kind\":\"object\",\"type\":\"Notary\",\"relationName\":\"NotaryToSuccessionPlan\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
 
 async function decodeBase64AsWasm(wasmBase64: string): Promise<WebAssembly.Module> {
   const { Buffer } = await import('node:buffer')
@@ -58,8 +58,8 @@ export interface PrismaClientConstructor {
    * @example
    * ```
    * const prisma = new PrismaClient()
-   * // Fetch zero or more SuccessionPlans
-   * const successionPlans = await prisma.successionPlan.findMany()
+   * // Fetch zero or more Notaries
+   * const notaries = await prisma.notary.findMany()
    * ```
    * 
    * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client).
@@ -80,8 +80,8 @@ export interface PrismaClientConstructor {
  * @example
  * ```
  * const prisma = new PrismaClient()
- * // Fetch zero or more SuccessionPlans
- * const successionPlans = await prisma.successionPlan.findMany()
+ * // Fetch zero or more Notaries
+ * const notaries = await prisma.notary.findMany()
  * ```
  * 
  * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client).
@@ -175,6 +175,26 @@ export interface PrismaClient<
   }>>
 
       /**
+   * `prisma.notary`: Exposes CRUD operations for the **Notary** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Notaries
+    * const notaries = await prisma.notary.findMany()
+    * ```
+    */
+  get notary(): Prisma.NotaryDelegate<ExtArgs, { omit: OmitOpts }>;
+
+  /**
+   * `prisma.testator`: Exposes CRUD operations for the **Testator** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Testators
+    * const testators = await prisma.testator.findMany()
+    * ```
+    */
+  get testator(): Prisma.TestatorDelegate<ExtArgs, { omit: OmitOpts }>;
+
+  /**
    * `prisma.successionPlan`: Exposes CRUD operations for the **SuccessionPlan** model.
     * Example usage:
     * ```ts

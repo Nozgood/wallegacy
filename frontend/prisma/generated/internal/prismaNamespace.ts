@@ -384,6 +384,8 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 
 
 export const ModelName = {
+  Notary: 'Notary',
+  Testator: 'Testator',
   SuccessionPlan: 'SuccessionPlan'
 } as const
 
@@ -400,10 +402,158 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "successionPlan"
+    modelProps: "notary" | "testator" | "successionPlan"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
+    Notary: {
+      payload: Prisma.$NotaryPayload<ExtArgs>
+      fields: Prisma.NotaryFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.NotaryFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotaryPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.NotaryFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotaryPayload>
+        }
+        findFirst: {
+          args: Prisma.NotaryFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotaryPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.NotaryFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotaryPayload>
+        }
+        findMany: {
+          args: Prisma.NotaryFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotaryPayload>[]
+        }
+        create: {
+          args: Prisma.NotaryCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotaryPayload>
+        }
+        createMany: {
+          args: Prisma.NotaryCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.NotaryCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotaryPayload>[]
+        }
+        delete: {
+          args: Prisma.NotaryDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotaryPayload>
+        }
+        update: {
+          args: Prisma.NotaryUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotaryPayload>
+        }
+        deleteMany: {
+          args: Prisma.NotaryDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.NotaryUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.NotaryUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotaryPayload>[]
+        }
+        upsert: {
+          args: Prisma.NotaryUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotaryPayload>
+        }
+        aggregate: {
+          args: Prisma.NotaryAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateNotary>
+        }
+        groupBy: {
+          args: Prisma.NotaryGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.NotaryGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.NotaryCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.NotaryCountAggregateOutputType> | number
+        }
+      }
+    }
+    Testator: {
+      payload: Prisma.$TestatorPayload<ExtArgs>
+      fields: Prisma.TestatorFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.TestatorFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TestatorPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.TestatorFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TestatorPayload>
+        }
+        findFirst: {
+          args: Prisma.TestatorFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TestatorPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.TestatorFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TestatorPayload>
+        }
+        findMany: {
+          args: Prisma.TestatorFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TestatorPayload>[]
+        }
+        create: {
+          args: Prisma.TestatorCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TestatorPayload>
+        }
+        createMany: {
+          args: Prisma.TestatorCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.TestatorCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TestatorPayload>[]
+        }
+        delete: {
+          args: Prisma.TestatorDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TestatorPayload>
+        }
+        update: {
+          args: Prisma.TestatorUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TestatorPayload>
+        }
+        deleteMany: {
+          args: Prisma.TestatorDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.TestatorUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.TestatorUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TestatorPayload>[]
+        }
+        upsert: {
+          args: Prisma.TestatorUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TestatorPayload>
+        }
+        aggregate: {
+          args: Prisma.TestatorAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateTestator>
+        }
+        groupBy: {
+          args: Prisma.TestatorGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TestatorGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.TestatorCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TestatorCountAggregateOutputType> | number
+        }
+      }
+    }
     SuccessionPlan: {
       payload: Prisma.$SuccessionPlanPayload<ExtArgs>
       fields: Prisma.SuccessionPlanFieldRefs
@@ -514,10 +664,26 @@ export const TransactionIsolationLevel = runtime.makeStrictEnum({
 export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
 
 
+export const NotaryScalarFieldEnum = {
+  id: 'id',
+  username: 'username'
+} as const
+
+export type NotaryScalarFieldEnum = (typeof NotaryScalarFieldEnum)[keyof typeof NotaryScalarFieldEnum]
+
+
+export const TestatorScalarFieldEnum = {
+  id: 'id',
+  publicKey: 'publicKey'
+} as const
+
+export type TestatorScalarFieldEnum = (typeof TestatorScalarFieldEnum)[keyof typeof TestatorScalarFieldEnum]
+
+
 export const SuccessionPlanScalarFieldEnum = {
   id: 'id',
-  clientAddress: 'clientAddress',
-  notaryName: 'notaryName',
+  testatorPublicKey: 'testatorPublicKey',
+  notaryUsername: 'notaryUsername',
   status: 'status',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
@@ -655,6 +821,8 @@ export type PrismaClientOptions = ({
   omit?: GlobalOmitConfig
 }
 export type GlobalOmitConfig = {
+  notary?: Prisma.NotaryOmit
+  testator?: Prisma.TestatorOmit
   successionPlan?: Prisma.SuccessionPlanOmit
 }
 

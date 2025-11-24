@@ -5,20 +5,46 @@ import { useRouter } from "next/navigation";
 import NotaryHeader from "@/components/NotaryHeader";
 import { loginNotary } from "./actions";
 
+type Notary = {
+  id: number;
+  username: string;
+};
+
 export default function NotaireLoginPage() {
     const router = useRouter() 
-    const [identifier, setIdentifier] = useState("");
+    const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>('');
 
   // handleSubmit will be use in the future to call notary auth API
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    console.log("Identifier:", identifier);
-    console.log("Password:", password);
+    try {
+      const response = await fetch('/api/notary/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username: username }),
+      });
 
-    await loginNotary(identifier, password);
-   router.push("/notary/space") 
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Login failed');
+      }
+
+      const notary: Notary = await response.json();
+      
+
+   await loginNotary(notary);
+      router.push('/notary/space');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setLoading(false);
+    } 
   };
 
   return ( <>
@@ -36,8 +62,8 @@ export default function NotaireLoginPage() {
             </label>
             <input
               type="text"
-              value={identifier}
-              onChange={(e) => setIdentifier(e.target.value)}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               className="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-black"
               placeholder="Entrez votre identifiant"
             />
@@ -57,10 +83,11 @@ export default function NotaireLoginPage() {
           <button
             type="submit"
             className="w-full bg-black text-white py-2 rounded-lg font-medium hover:bg-gray-800 transition">
-            Se connecter
+              {loading ? 'Connexion...' : 'Se connecter'}
           </button>
         </form>
       </div>
+
     </div>
     </>
   );

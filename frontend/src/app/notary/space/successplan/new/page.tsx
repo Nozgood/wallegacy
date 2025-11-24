@@ -3,7 +3,7 @@ import { useState } from 'react';
 import NotaryHeader from '@/components/NotaryHeader';
 
 export default function SuccessionPlanForm() {
-  const [clientAddress, setWalletAddress] = useState('');
+  const [publicKey, setPublicKey] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -30,7 +30,7 @@ export default function SuccessionPlanForm() {
     setSuccess(false);
 
     // Validate address
-    const validationError = validateAddress(clientAddress);
+    const validationError = validateAddress(publicKey);
     if (validationError) {
       setError(validationError);
       return;
@@ -45,7 +45,7 @@ export default function SuccessionPlanForm() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ clientAddress: clientAddress }),
+        body: JSON.stringify({ publicKey: publicKey }),
       });
 
       if (!response.ok) {
@@ -53,7 +53,7 @@ export default function SuccessionPlanForm() {
       }
 
       setSuccess(true);
-      setWalletAddress('');
+      setPublicKey('');
     } catch (err) {
       setError(err.message || 'Une erreur est survenue');
     } finally {
@@ -63,7 +63,7 @@ export default function SuccessionPlanForm() {
 
   const handleAddressChange = (e: React.InputEvent) => {
     const value = e.target.value.trim();
-    setWalletAddress(value);
+    setPublicKey(value);
     if (error) setError('');
     if (success) setSuccess(false);
   };
@@ -92,7 +92,7 @@ export default function SuccessionPlanForm() {
               <input
                 type="text"
                 id="walletAddress"
-                value={clientAddress}
+                value={publicKey}
                 onChange={handleAddressChange}
                 placeholder="0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb"
                 className={`w-full px-4 py-3 rounded-lg border-2 transition-colors font-mono text-sm ${

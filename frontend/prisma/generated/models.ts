@@ -8,5 +8,7 @@
  *
  * 🟢 You can import this file directly.
  */
+export type * from './models/Notary'
+export type * from './models/Testator'
 export type * from './models/SuccessionPlan'
 export type * from './commonInputTypes'

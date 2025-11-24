@@ -36,8 +36,8 @@ export type SuccessionPlanSumAggregateOutputType = {
 
 export type SuccessionPlanMinAggregateOutputType = {
   id: number | null
-  clientAddress: string | null
-  notaryName: string | null
+  testatorPublicKey: string | null
+  notaryUsername: string | null
   status: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -46,8 +46,8 @@ export type SuccessionPlanMinAggregateOutputType = {
 
 export type SuccessionPlanMaxAggregateOutputType = {
   id: number | null
-  clientAddress: string | null
-  notaryName: string | null
+  testatorPublicKey: string | null
+  notaryUsername: string | null
   status: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -56,8 +56,8 @@ export type SuccessionPlanMaxAggregateOutputType = {
 
 export type SuccessionPlanCountAggregateOutputType = {
   id: number
-  clientAddress: number
-  notaryName: number
+  testatorPublicKey: number
+  notaryUsername: number
   status: number
   createdAt: number
   updatedAt: number
@@ -76,8 +76,8 @@ export type SuccessionPlanSumAggregateInputType = {
 
 export type SuccessionPlanMinAggregateInputType = {
   id?: true
-  clientAddress?: true
-  notaryName?: true
+  testatorPublicKey?: true
+  notaryUsername?: true
   status?: true
   createdAt?: true
   updatedAt?: true
@@ -86,8 +86,8 @@ export type SuccessionPlanMinAggregateInputType = {
 
 export type SuccessionPlanMaxAggregateInputType = {
   id?: true
-  clientAddress?: true
-  notaryName?: true
+  testatorPublicKey?: true
+  notaryUsername?: true
   status?: true
   createdAt?: true
   updatedAt?: true
@@ -96,8 +96,8 @@ export type SuccessionPlanMaxAggregateInputType = {
 
 export type SuccessionPlanCountAggregateInputType = {
   id?: true
-  clientAddress?: true
-  notaryName?: true
+  testatorPublicKey?: true
+  notaryUsername?: true
   status?: true
   createdAt?: true
   updatedAt?: true
@@ -193,8 +193,8 @@ export type SuccessionPlanGroupByArgs<ExtArgs extends runtime.Types.Extensions.I
 
 export type SuccessionPlanGroupByOutputType = {
   id: number
-  clientAddress: string
-  notaryName: string
+  testatorPublicKey: string
+  notaryUsername: string
   status: string
   createdAt: Date
   updatedAt: Date
@@ -226,41 +226,47 @@ export type SuccessionPlanWhereInput = {
   OR?: Prisma.SuccessionPlanWhereInput[]
   NOT?: Prisma.SuccessionPlanWhereInput | Prisma.SuccessionPlanWhereInput[]
   id?: Prisma.IntFilter<"SuccessionPlan"> | number
-  clientAddress?: Prisma.StringFilter<"SuccessionPlan"> | string
-  notaryName?: Prisma.StringFilter<"SuccessionPlan"> | string
+  testatorPublicKey?: Prisma.StringFilter<"SuccessionPlan"> | string
+  notaryUsername?: Prisma.StringFilter<"SuccessionPlan"> | string
   status?: Prisma.StringFilter<"SuccessionPlan"> | string
   createdAt?: Prisma.DateTimeFilter<"SuccessionPlan"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"SuccessionPlan"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"SuccessionPlan"> | Date | string | null
+  testator?: Prisma.XOR<Prisma.TestatorScalarRelationFilter, Prisma.TestatorWhereInput>
+  notary?: Prisma.XOR<Prisma.NotaryScalarRelationFilter, Prisma.NotaryWhereInput>
 }
 
 export type SuccessionPlanOrderByWithRelationInput = {
   id?: Prisma.SortOrder
-  clientAddress?: Prisma.SortOrder
-  notaryName?: Prisma.SortOrder
+  testatorPublicKey?: Prisma.SortOrder
+  notaryUsername?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  testator?: Prisma.TestatorOrderByWithRelationInput
+  notary?: Prisma.NotaryOrderByWithRelationInput
 }
 
 export type SuccessionPlanWhereUniqueInput = Prisma.AtLeast<{
   id?: number
-  clientAddress?: string
+  testatorPublicKey?: string
   AND?: Prisma.SuccessionPlanWhereInput | Prisma.SuccessionPlanWhereInput[]
   OR?: Prisma.SuccessionPlanWhereInput[]
   NOT?: Prisma.SuccessionPlanWhereInput | Prisma.SuccessionPlanWhereInput[]
-  notaryName?: Prisma.StringFilter<"SuccessionPlan"> | string
+  notaryUsername?: Prisma.StringFilter<"SuccessionPlan"> | string
   status?: Prisma.StringFilter<"SuccessionPlan"> | string
   createdAt?: Prisma.DateTimeFilter<"SuccessionPlan"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"SuccessionPlan"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"SuccessionPlan"> | Date | string | null
-}, "id" | "clientAddress">
+  testator?: Prisma.XOR<Prisma.TestatorScalarRelationFilter, Prisma.TestatorWhereInput>
+  notary?: Prisma.XOR<Prisma.NotaryScalarRelationFilter, Prisma.NotaryWhereInput>
+}, "id" | "testatorPublicKey">
 
 export type SuccessionPlanOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
-  clientAddress?: Prisma.SortOrder
-  notaryName?: Prisma.SortOrder
+  testatorPublicKey?: Prisma.SortOrder
+  notaryUsername?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -277,8 +283,8 @@ export type SuccessionPlanScalarWhereWithAggregatesInput = {
   OR?: Prisma.SuccessionPlanScalarWhereWithAggregatesInput[]
   NOT?: Prisma.SuccessionPlanScalarWhereWithAggregatesInput | Prisma.SuccessionPlanScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"SuccessionPlan"> | number
-  clientAddress?: Prisma.StringWithAggregatesFilter<"SuccessionPlan"> | string
-  notaryName?: Prisma.StringWithAggregatesFilter<"SuccessionPlan"> | string
+  testatorPublicKey?: Prisma.StringWithAggregatesFilter<"SuccessionPlan"> | string
+  notaryUsername?: Prisma.StringWithAggregatesFilter<"SuccessionPlan"> | string
   status?: Prisma.StringWithAggregatesFilter<"SuccessionPlan"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"SuccessionPlan"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"SuccessionPlan"> | Date | string
@@ -286,18 +292,18 @@ export type SuccessionPlanScalarWhereWithAggregatesInput = {
 }
 
 export type SuccessionPlanCreateInput = {
-  clientAddress: string
-  notaryName: string
   status: string
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  testator: Prisma.TestatorCreateNestedOneWithoutSuccessionPlanInput
+  notary: Prisma.NotaryCreateNestedOneWithoutSuccessionPlansInput
 }
 
 export type SuccessionPlanUncheckedCreateInput = {
   id?: number
-  clientAddress: string
-  notaryName: string
+  testatorPublicKey: string
+  notaryUsername: string
   status: string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -305,18 +311,18 @@ export type SuccessionPlanUncheckedCreateInput = {
 }
 
 export type SuccessionPlanUpdateInput = {
-  clientAddress?: Prisma.StringFieldUpdateOperationsInput | string
-  notaryName?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  testator?: Prisma.TestatorUpdateOneRequiredWithoutSuccessionPlanNestedInput
+  notary?: Prisma.NotaryUpdateOneRequiredWithoutSuccessionPlansNestedInput
 }
 
 export type SuccessionPlanUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  clientAddress?: Prisma.StringFieldUpdateOperationsInput | string
-  notaryName?: Prisma.StringFieldUpdateOperationsInput | string
+  testatorPublicKey?: Prisma.StringFieldUpdateOperationsInput | string
+  notaryUsername?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -325,8 +331,8 @@ export type SuccessionPlanUncheckedUpdateInput = {
 
 export type SuccessionPlanCreateManyInput = {
   id?: number
-  clientAddress: string
-  notaryName: string
+  testatorPublicKey: string
+  notaryUsername: string
   status: string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -334,8 +340,6 @@ export type SuccessionPlanCreateManyInput = {
 }
 
 export type SuccessionPlanUpdateManyMutationInput = {
-  clientAddress?: Prisma.StringFieldUpdateOperationsInput | string
-  notaryName?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -344,18 +348,33 @@ export type SuccessionPlanUpdateManyMutationInput = {
 
 export type SuccessionPlanUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  clientAddress?: Prisma.StringFieldUpdateOperationsInput | string
-  notaryName?: Prisma.StringFieldUpdateOperationsInput | string
+  testatorPublicKey?: Prisma.StringFieldUpdateOperationsInput | string
+  notaryUsername?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
+export type SuccessionPlanListRelationFilter = {
+  every?: Prisma.SuccessionPlanWhereInput
+  some?: Prisma.SuccessionPlanWhereInput
+  none?: Prisma.SuccessionPlanWhereInput
+}
+
+export type SuccessionPlanOrderByRelationAggregateInput = {
+  _count?: Prisma.SortOrder
+}
+
+export type SuccessionPlanNullableScalarRelationFilter = {
+  is?: Prisma.SuccessionPlanWhereInput | null
+  isNot?: Prisma.SuccessionPlanWhereInput | null
+}
+
 export type SuccessionPlanCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  clientAddress?: Prisma.SortOrder
-  notaryName?: Prisma.SortOrder
+  testatorPublicKey?: Prisma.SortOrder
+  notaryUsername?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -368,8 +387,8 @@ export type SuccessionPlanAvgOrderByAggregateInput = {
 
 export type SuccessionPlanMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  clientAddress?: Prisma.SortOrder
-  notaryName?: Prisma.SortOrder
+  testatorPublicKey?: Prisma.SortOrder
+  notaryUsername?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -378,8 +397,8 @@ export type SuccessionPlanMaxOrderByAggregateInput = {
 
 export type SuccessionPlanMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  clientAddress?: Prisma.SortOrder
-  notaryName?: Prisma.SortOrder
+  testatorPublicKey?: Prisma.SortOrder
+  notaryUsername?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -390,8 +409,78 @@ export type SuccessionPlanSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
 }
 
-export type StringFieldUpdateOperationsInput = {
-  set?: string
+export type SuccessionPlanCreateNestedManyWithoutNotaryInput = {
+  create?: Prisma.XOR<Prisma.SuccessionPlanCreateWithoutNotaryInput, Prisma.SuccessionPlanUncheckedCreateWithoutNotaryInput> | Prisma.SuccessionPlanCreateWithoutNotaryInput[] | Prisma.SuccessionPlanUncheckedCreateWithoutNotaryInput[]
+  connectOrCreate?: Prisma.SuccessionPlanCreateOrConnectWithoutNotaryInput | Prisma.SuccessionPlanCreateOrConnectWithoutNotaryInput[]
+  createMany?: Prisma.SuccessionPlanCreateManyNotaryInputEnvelope
+  connect?: Prisma.SuccessionPlanWhereUniqueInput | Prisma.SuccessionPlanWhereUniqueInput[]
+}
+
+export type SuccessionPlanUncheckedCreateNestedManyWithoutNotaryInput = {
+  create?: Prisma.XOR<Prisma.SuccessionPlanCreateWithoutNotaryInput, Prisma.SuccessionPlanUncheckedCreateWithoutNotaryInput> | Prisma.SuccessionPlanCreateWithoutNotaryInput[] | Prisma.SuccessionPlanUncheckedCreateWithoutNotaryInput[]
+  connectOrCreate?: Prisma.SuccessionPlanCreateOrConnectWithoutNotaryInput | Prisma.SuccessionPlanCreateOrConnectWithoutNotaryInput[]
+  createMany?: Prisma.SuccessionPlanCreateManyNotaryInputEnvelope
+  connect?: Prisma.SuccessionPlanWhereUniqueInput | Prisma.SuccessionPlanWhereUniqueInput[]
+}
+
+export type SuccessionPlanUpdateManyWithoutNotaryNestedInput = {
+  create?: Prisma.XOR<Prisma.SuccessionPlanCreateWithoutNotaryInput, Prisma.SuccessionPlanUncheckedCreateWithoutNotaryInput> | Prisma.SuccessionPlanCreateWithoutNotaryInput[] | Prisma.SuccessionPlanUncheckedCreateWithoutNotaryInput[]
+  connectOrCreate?: Prisma.SuccessionPlanCreateOrConnectWithoutNotaryInput | Prisma.SuccessionPlanCreateOrConnectWithoutNotaryInput[]
+  upsert?: Prisma.SuccessionPlanUpsertWithWhereUniqueWithoutNotaryInput | Prisma.SuccessionPlanUpsertWithWhereUniqueWithoutNotaryInput[]
+  createMany?: Prisma.SuccessionPlanCreateManyNotaryInputEnvelope
+  set?: Prisma.SuccessionPlanWhereUniqueInput | Prisma.SuccessionPlanWhereUniqueInput[]
+  disconnect?: Prisma.SuccessionPlanWhereUniqueInput | Prisma.SuccessionPlanWhereUniqueInput[]
+  delete?: Prisma.SuccessionPlanWhereUniqueInput | Prisma.SuccessionPlanWhereUniqueInput[]
+  connect?: Prisma.SuccessionPlanWhereUniqueInput | Prisma.SuccessionPlanWhereUniqueInput[]
+  update?: Prisma.SuccessionPlanUpdateWithWhereUniqueWithoutNotaryInput | Prisma.SuccessionPlanUpdateWithWhereUniqueWithoutNotaryInput[]
+  updateMany?: Prisma.SuccessionPlanUpdateManyWithWhereWithoutNotaryInput | Prisma.SuccessionPlanUpdateManyWithWhereWithoutNotaryInput[]
+  deleteMany?: Prisma.SuccessionPlanScalarWhereInput | Prisma.SuccessionPlanScalarWhereInput[]
+}
+
+export type SuccessionPlanUncheckedUpdateManyWithoutNotaryNestedInput = {
+  create?: Prisma.XOR<Prisma.SuccessionPlanCreateWithoutNotaryInput, Prisma.SuccessionPlanUncheckedCreateWithoutNotaryInput> | Prisma.SuccessionPlanCreateWithoutNotaryInput[] | Prisma.SuccessionPlanUncheckedCreateWithoutNotaryInput[]
+  connectOrCreate?: Prisma.SuccessionPlanCreateOrConnectWithoutNotaryInput | Prisma.SuccessionPlanCreateOrConnectWithoutNotaryInput[]
+  upsert?: Prisma.SuccessionPlanUpsertWithWhereUniqueWithoutNotaryInput | Prisma.SuccessionPlanUpsertWithWhereUniqueWithoutNotaryInput[]
+  createMany?: Prisma.SuccessionPlanCreateManyNotaryInputEnvelope
+  set?: Prisma.SuccessionPlanWhereUniqueInput | Prisma.SuccessionPlanWhereUniqueInput[]
+  disconnect?: Prisma.SuccessionPlanWhereUniqueInput | Prisma.SuccessionPlanWhereUniqueInput[]
+  delete?: Prisma.SuccessionPlanWhereUniqueInput | Prisma.SuccessionPlanWhereUniqueInput[]
+  connect?: Prisma.SuccessionPlanWhereUniqueInput | Prisma.SuccessionPlanWhereUniqueInput[]
+  update?: Prisma.SuccessionPlanUpdateWithWhereUniqueWithoutNotaryInput | Prisma.SuccessionPlanUpdateWithWhereUniqueWithoutNotaryInput[]
+  updateMany?: Prisma.SuccessionPlanUpdateManyWithWhereWithoutNotaryInput | Prisma.SuccessionPlanUpdateManyWithWhereWithoutNotaryInput[]
+  deleteMany?: Prisma.SuccessionPlanScalarWhereInput | Prisma.SuccessionPlanScalarWhereInput[]
+}
+
+export type SuccessionPlanCreateNestedOneWithoutTestatorInput = {
+  create?: Prisma.XOR<Prisma.SuccessionPlanCreateWithoutTestatorInput, Prisma.SuccessionPlanUncheckedCreateWithoutTestatorInput>
+  connectOrCreate?: Prisma.SuccessionPlanCreateOrConnectWithoutTestatorInput
+  connect?: Prisma.SuccessionPlanWhereUniqueInput
+}
+
+export type SuccessionPlanUncheckedCreateNestedOneWithoutTestatorInput = {
+  create?: Prisma.XOR<Prisma.SuccessionPlanCreateWithoutTestatorInput, Prisma.SuccessionPlanUncheckedCreateWithoutTestatorInput>
+  connectOrCreate?: Prisma.SuccessionPlanCreateOrConnectWithoutTestatorInput
+  connect?: Prisma.SuccessionPlanWhereUniqueInput
+}
+
+export type SuccessionPlanUpdateOneWithoutTestatorNestedInput = {
+  create?: Prisma.XOR<Prisma.SuccessionPlanCreateWithoutTestatorInput, Prisma.SuccessionPlanUncheckedCreateWithoutTestatorInput>
+  connectOrCreate?: Prisma.SuccessionPlanCreateOrConnectWithoutTestatorInput
+  upsert?: Prisma.SuccessionPlanUpsertWithoutTestatorInput
+  disconnect?: Prisma.SuccessionPlanWhereInput | boolean
+  delete?: Prisma.SuccessionPlanWhereInput | boolean
+  connect?: Prisma.SuccessionPlanWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.SuccessionPlanUpdateToOneWithWhereWithoutTestatorInput, Prisma.SuccessionPlanUpdateWithoutTestatorInput>, Prisma.SuccessionPlanUncheckedUpdateWithoutTestatorInput>
+}
+
+export type SuccessionPlanUncheckedUpdateOneWithoutTestatorNestedInput = {
+  create?: Prisma.XOR<Prisma.SuccessionPlanCreateWithoutTestatorInput, Prisma.SuccessionPlanUncheckedCreateWithoutTestatorInput>
+  connectOrCreate?: Prisma.SuccessionPlanCreateOrConnectWithoutTestatorInput
+  upsert?: Prisma.SuccessionPlanUpsertWithoutTestatorInput
+  disconnect?: Prisma.SuccessionPlanWhereInput | boolean
+  delete?: Prisma.SuccessionPlanWhereInput | boolean
+  connect?: Prisma.SuccessionPlanWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.SuccessionPlanUpdateToOneWithWhereWithoutTestatorInput, Prisma.SuccessionPlanUpdateWithoutTestatorInput>, Prisma.SuccessionPlanUncheckedUpdateWithoutTestatorInput>
 }
 
 export type DateTimeFieldUpdateOperationsInput = {
@@ -402,65 +491,218 @@ export type NullableDateTimeFieldUpdateOperationsInput = {
   set?: Date | string | null
 }
 
-export type IntFieldUpdateOperationsInput = {
-  set?: number
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
+export type SuccessionPlanCreateWithoutNotaryInput = {
+  status: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  testator: Prisma.TestatorCreateNestedOneWithoutSuccessionPlanInput
+}
+
+export type SuccessionPlanUncheckedCreateWithoutNotaryInput = {
+  id?: number
+  testatorPublicKey: string
+  status: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+}
+
+export type SuccessionPlanCreateOrConnectWithoutNotaryInput = {
+  where: Prisma.SuccessionPlanWhereUniqueInput
+  create: Prisma.XOR<Prisma.SuccessionPlanCreateWithoutNotaryInput, Prisma.SuccessionPlanUncheckedCreateWithoutNotaryInput>
+}
+
+export type SuccessionPlanCreateManyNotaryInputEnvelope = {
+  data: Prisma.SuccessionPlanCreateManyNotaryInput | Prisma.SuccessionPlanCreateManyNotaryInput[]
+}
+
+export type SuccessionPlanUpsertWithWhereUniqueWithoutNotaryInput = {
+  where: Prisma.SuccessionPlanWhereUniqueInput
+  update: Prisma.XOR<Prisma.SuccessionPlanUpdateWithoutNotaryInput, Prisma.SuccessionPlanUncheckedUpdateWithoutNotaryInput>
+  create: Prisma.XOR<Prisma.SuccessionPlanCreateWithoutNotaryInput, Prisma.SuccessionPlanUncheckedCreateWithoutNotaryInput>
+}
+
+export type SuccessionPlanUpdateWithWhereUniqueWithoutNotaryInput = {
+  where: Prisma.SuccessionPlanWhereUniqueInput
+  data: Prisma.XOR<Prisma.SuccessionPlanUpdateWithoutNotaryInput, Prisma.SuccessionPlanUncheckedUpdateWithoutNotaryInput>
+}
+
+export type SuccessionPlanUpdateManyWithWhereWithoutNotaryInput = {
+  where: Prisma.SuccessionPlanScalarWhereInput
+  data: Prisma.XOR<Prisma.SuccessionPlanUpdateManyMutationInput, Prisma.SuccessionPlanUncheckedUpdateManyWithoutNotaryInput>
+}
+
+export type SuccessionPlanScalarWhereInput = {
+  AND?: Prisma.SuccessionPlanScalarWhereInput | Prisma.SuccessionPlanScalarWhereInput[]
+  OR?: Prisma.SuccessionPlanScalarWhereInput[]
+  NOT?: Prisma.SuccessionPlanScalarWhereInput | Prisma.SuccessionPlanScalarWhereInput[]
+  id?: Prisma.IntFilter<"SuccessionPlan"> | number
+  testatorPublicKey?: Prisma.StringFilter<"SuccessionPlan"> | string
+  notaryUsername?: Prisma.StringFilter<"SuccessionPlan"> | string
+  status?: Prisma.StringFilter<"SuccessionPlan"> | string
+  createdAt?: Prisma.DateTimeFilter<"SuccessionPlan"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"SuccessionPlan"> | Date | string
+  deletedAt?: Prisma.DateTimeNullableFilter<"SuccessionPlan"> | Date | string | null
+}
+
+export type SuccessionPlanCreateWithoutTestatorInput = {
+  status: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  notary: Prisma.NotaryCreateNestedOneWithoutSuccessionPlansInput
+}
+
+export type SuccessionPlanUncheckedCreateWithoutTestatorInput = {
+  id?: number
+  notaryUsername: string
+  status: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+}
+
+export type SuccessionPlanCreateOrConnectWithoutTestatorInput = {
+  where: Prisma.SuccessionPlanWhereUniqueInput
+  create: Prisma.XOR<Prisma.SuccessionPlanCreateWithoutTestatorInput, Prisma.SuccessionPlanUncheckedCreateWithoutTestatorInput>
+}
+
+export type SuccessionPlanUpsertWithoutTestatorInput = {
+  update: Prisma.XOR<Prisma.SuccessionPlanUpdateWithoutTestatorInput, Prisma.SuccessionPlanUncheckedUpdateWithoutTestatorInput>
+  create: Prisma.XOR<Prisma.SuccessionPlanCreateWithoutTestatorInput, Prisma.SuccessionPlanUncheckedCreateWithoutTestatorInput>
+  where?: Prisma.SuccessionPlanWhereInput
+}
+
+export type SuccessionPlanUpdateToOneWithWhereWithoutTestatorInput = {
+  where?: Prisma.SuccessionPlanWhereInput
+  data: Prisma.XOR<Prisma.SuccessionPlanUpdateWithoutTestatorInput, Prisma.SuccessionPlanUncheckedUpdateWithoutTestatorInput>
+}
+
+export type SuccessionPlanUpdateWithoutTestatorInput = {
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  notary?: Prisma.NotaryUpdateOneRequiredWithoutSuccessionPlansNestedInput
+}
+
+export type SuccessionPlanUncheckedUpdateWithoutTestatorInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  notaryUsername?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+}
+
+export type SuccessionPlanCreateManyNotaryInput = {
+  id?: number
+  testatorPublicKey: string
+  status: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+}
+
+export type SuccessionPlanUpdateWithoutNotaryInput = {
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  testator?: Prisma.TestatorUpdateOneRequiredWithoutSuccessionPlanNestedInput
+}
+
+export type SuccessionPlanUncheckedUpdateWithoutNotaryInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  testatorPublicKey?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+}
+
+export type SuccessionPlanUncheckedUpdateManyWithoutNotaryInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  testatorPublicKey?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 
 
 export type SuccessionPlanSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  clientAddress?: boolean
-  notaryName?: boolean
+  testatorPublicKey?: boolean
+  notaryUsername?: boolean
   status?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
+  testator?: boolean | Prisma.TestatorDefaultArgs<ExtArgs>
+  notary?: boolean | Prisma.NotaryDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["successionPlan"]>
 
 export type SuccessionPlanSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  clientAddress?: boolean
-  notaryName?: boolean
+  testatorPublicKey?: boolean
+  notaryUsername?: boolean
   status?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
+  testator?: boolean | Prisma.TestatorDefaultArgs<ExtArgs>
+  notary?: boolean | Prisma.NotaryDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["successionPlan"]>
 
 export type SuccessionPlanSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  clientAddress?: boolean
-  notaryName?: boolean
+  testatorPublicKey?: boolean
+  notaryUsername?: boolean
   status?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
+  testator?: boolean | Prisma.TestatorDefaultArgs<ExtArgs>
+  notary?: boolean | Prisma.NotaryDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["successionPlan"]>
 
 export type SuccessionPlanSelectScalar = {
   id?: boolean
-  clientAddress?: boolean
-  notaryName?: boolean
+  testatorPublicKey?: boolean
+  notaryUsername?: boolean
   status?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
 }
 
-export type SuccessionPlanOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "clientAddress" | "notaryName" | "status" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["successionPlan"]>
+export type SuccessionPlanOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "testatorPublicKey" | "notaryUsername" | "status" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["successionPlan"]>
+export type SuccessionPlanInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  testator?: boolean | Prisma.TestatorDefaultArgs<ExtArgs>
+  notary?: boolean | Prisma.NotaryDefaultArgs<ExtArgs>
+}
+export type SuccessionPlanIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  testator?: boolean | Prisma.TestatorDefaultArgs<ExtArgs>
+  notary?: boolean | Prisma.NotaryDefaultArgs<ExtArgs>
+}
+export type SuccessionPlanIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  testator?: boolean | Prisma.TestatorDefaultArgs<ExtArgs>
+  notary?: boolean | Prisma.NotaryDefaultArgs<ExtArgs>
+}
 
 export type $SuccessionPlanPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "SuccessionPlan"
-  objects: {}
+  objects: {
+    testator: Prisma.$TestatorPayload<ExtArgs>
+    notary: Prisma.$NotaryPayload<ExtArgs>
+  }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
-    clientAddress: string
-    notaryName: string
+    testatorPublicKey: string
+    notaryUsername: string
     status: string
     createdAt: Date
     updatedAt: Date
@@ -859,6 +1101,8 @@ readonly fields: SuccessionPlanFieldRefs;
  */
 export interface Prisma__SuccessionPlanClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  testator<T extends Prisma.TestatorDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TestatorDefaultArgs<ExtArgs>>): Prisma.Prisma__TestatorClient<runtime.Types.Result.GetResult<Prisma.$TestatorPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  notary<T extends Prisma.NotaryDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.NotaryDefaultArgs<ExtArgs>>): Prisma.Prisma__NotaryClient<runtime.Types.Result.GetResult<Prisma.$NotaryPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -889,8 +1133,8 @@ export interface Prisma__SuccessionPlanClient<T, Null = never, ExtArgs extends r
  */
 export interface SuccessionPlanFieldRefs {
   readonly id: Prisma.FieldRef<"SuccessionPlan", 'Int'>
-  readonly clientAddress: Prisma.FieldRef<"SuccessionPlan", 'String'>
-  readonly notaryName: Prisma.FieldRef<"SuccessionPlan", 'String'>
+  readonly testatorPublicKey: Prisma.FieldRef<"SuccessionPlan", 'String'>
+  readonly notaryUsername: Prisma.FieldRef<"SuccessionPlan", 'String'>
   readonly status: Prisma.FieldRef<"SuccessionPlan", 'String'>
   readonly createdAt: Prisma.FieldRef<"SuccessionPlan", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"SuccessionPlan", 'DateTime'>
@@ -912,6 +1156,10 @@ export type SuccessionPlanFindUniqueArgs<ExtArgs extends runtime.Types.Extension
    */
   omit?: Prisma.SuccessionPlanOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SuccessionPlanInclude<ExtArgs> | null
+  /**
    * Filter, which SuccessionPlan to fetch.
    */
   where: Prisma.SuccessionPlanWhereUniqueInput
@@ -930,6 +1178,10 @@ export type SuccessionPlanFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.Ex
    */
   omit?: Prisma.SuccessionPlanOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SuccessionPlanInclude<ExtArgs> | null
+  /**
    * Filter, which SuccessionPlan to fetch.
    */
   where: Prisma.SuccessionPlanWhereUniqueInput
@@ -947,6 +1199,10 @@ export type SuccessionPlanFindFirstArgs<ExtArgs extends runtime.Types.Extensions
    * Omit specific fields from the SuccessionPlan
    */
   omit?: Prisma.SuccessionPlanOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SuccessionPlanInclude<ExtArgs> | null
   /**
    * Filter, which SuccessionPlan to fetch.
    */
@@ -996,6 +1252,10 @@ export type SuccessionPlanFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Ext
    */
   omit?: Prisma.SuccessionPlanOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SuccessionPlanInclude<ExtArgs> | null
+  /**
    * Filter, which SuccessionPlan to fetch.
    */
   where?: Prisma.SuccessionPlanWhereInput
@@ -1044,6 +1304,10 @@ export type SuccessionPlanFindManyArgs<ExtArgs extends runtime.Types.Extensions.
    */
   omit?: Prisma.SuccessionPlanOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SuccessionPlanInclude<ExtArgs> | null
+  /**
    * Filter, which SuccessionPlans to fetch.
    */
   where?: Prisma.SuccessionPlanWhereInput
@@ -1087,6 +1351,10 @@ export type SuccessionPlanCreateArgs<ExtArgs extends runtime.Types.Extensions.In
    */
   omit?: Prisma.SuccessionPlanOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SuccessionPlanInclude<ExtArgs> | null
+  /**
    * The data needed to create a SuccessionPlan.
    */
   data: Prisma.XOR<Prisma.SuccessionPlanCreateInput, Prisma.SuccessionPlanUncheckedCreateInput>
@@ -1118,6 +1386,10 @@ export type SuccessionPlanCreateManyAndReturnArgs<ExtArgs extends runtime.Types.
    * The data used to create many SuccessionPlans.
    */
   data: Prisma.SuccessionPlanCreateManyInput | Prisma.SuccessionPlanCreateManyInput[]
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SuccessionPlanIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1132,6 +1404,10 @@ export type SuccessionPlanUpdateArgs<ExtArgs extends runtime.Types.Extensions.In
    * Omit specific fields from the SuccessionPlan
    */
   omit?: Prisma.SuccessionPlanOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SuccessionPlanInclude<ExtArgs> | null
   /**
    * The data needed to update a SuccessionPlan.
    */
@@ -1184,6 +1460,10 @@ export type SuccessionPlanUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.
    * Limit how many SuccessionPlans to update.
    */
   limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SuccessionPlanIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1198,6 +1478,10 @@ export type SuccessionPlanUpsertArgs<ExtArgs extends runtime.Types.Extensions.In
    * Omit specific fields from the SuccessionPlan
    */
   omit?: Prisma.SuccessionPlanOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SuccessionPlanInclude<ExtArgs> | null
   /**
    * The filter to search for the SuccessionPlan to update in case it exists.
    */
@@ -1224,6 +1508,10 @@ export type SuccessionPlanDeleteArgs<ExtArgs extends runtime.Types.Extensions.In
    * Omit specific fields from the SuccessionPlan
    */
   omit?: Prisma.SuccessionPlanOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SuccessionPlanInclude<ExtArgs> | null
   /**
    * Filter which SuccessionPlan to delete.
    */
@@ -1256,4 +1544,8 @@ export type SuccessionPlanDefaultArgs<ExtArgs extends runtime.Types.Extensions.I
    * Omit specific fields from the SuccessionPlan
    */
   omit?: Prisma.SuccessionPlanOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SuccessionPlanInclude<ExtArgs> | null
 }
