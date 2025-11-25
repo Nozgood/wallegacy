@@ -21,6 +21,11 @@ npm install
 
 ### DB migration
 We use Prisma to manage SQLite database interactions
+
+First you will need to setup env variables:
+- Copy paste the `.env.example` file and rename it `.env`
+- Add your own values
+
 If you modify schemas (`./prisma/schema.prisma`) don't forget to apply it:
 ```sh
 npx prisma migrate dev

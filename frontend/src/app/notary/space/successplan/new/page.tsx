@@ -1,12 +1,14 @@
 "use client";
 import { useState } from 'react';
 import NotaryHeader from '@/components/NotaryHeader';
+import { useRouter } from 'next/navigation';
 
 export default function SuccessionPlanForm() {
   const [publicKey, setPublicKey] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter()
 
   const isValidEthereumAddress = (address: string) => {
     // Check if address starts with 0x and has 42 characters total (0x + 40 hex chars)
@@ -54,10 +56,14 @@ export default function SuccessionPlanForm() {
 
       setSuccess(true);
       setPublicKey('');
+
+      console.log(response);
+
     } catch (err) {
       setError(err.message || 'Une erreur est survenue');
     } finally {
       setIsSubmitting(false);
+      router.push("/notary/space")
     }
   };
 
