@@ -1,7 +1,7 @@
 "use client";
 
 import TestatorHeader from "@/components/TestatorHeader";
-import { useAccount } from "wagmi";
+import { useAccount, useBalance } from "wagmi";
 
 export default function TestatorLogin() {
   const { isConnected, address } = useAccount();

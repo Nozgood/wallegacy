@@ -4,12 +4,15 @@ import { configVariable, defineConfig } from "hardhat/config";
 export default defineConfig({
   plugins: [hardhatToolboxMochaEthersPlugin],
   solidity: {
-    profiles: {
+        profiles: {
       default: {
-        version: "0.8.28",
+        version: "0.8.30",
+      settings: {
+        viaIR: true,
       },
+    },
       production: {
-        version: "0.8.28",
+        version: "0.8.30",
         settings: {
           optimizer: {
             enabled: true,
