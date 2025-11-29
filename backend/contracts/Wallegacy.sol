@@ -49,7 +49,7 @@ contract Wallegacy {
 
     // errors
 
-    error Wallegacy__WillNotFound();
+    error Wallegacy__WillNotFound(address testatorAddress);
     error Wallegacy__NoHeirs();
     error Wallegacy__HeirWithoutAddress(uint256 heirIndex);
     error Wallegacy__NewWillNotGoodPercent(uint8 percent);
@@ -57,11 +57,13 @@ contract Wallegacy {
     constructor() {
     }
 
-    function getWillByTestator(address testatorAddress) public view returns(Will memory) {
-        Will memory will = s_testatorToWill[testatorAddress];
+
+    // todo: should the msg.sender be used instead of address as parameter ? because i can retrieve will infos of others
+    function getWillByTestator() public view returns(Will memory) {
+        Will memory will = s_testatorToWill[msg.sender];
         
         if (!will.exists) {
-            revert Wallegacy__WillNotFound();
+            revert Wallegacy__WillNotFound(msg.sender);
         }
 
         return will;

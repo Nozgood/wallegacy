@@ -1,5 +1,5 @@
 import hre from "hardhat";
-import { Wallegacy } from "../types/ethers-contracts/Wallegacy.js";
+import { Wallegacy } from "../../types/ethers-contracts/Wallegacy.js";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/types";
 import { expect } from "chai";
 
@@ -42,6 +42,54 @@ describe("Wallegacy Create Will", async function() {
             ]
             await expect(wallegacy.connect(testator).createWill(heirs))
             .to.be.revertedWithCustomError(wallegacy, "Wallegacy__NewWillNotGoodPercent").withArgs(200);
+        })
+    })
+
+    describe("when all parameters are correctly set", function() {
+        it("should revert with a custom error", async function() {
+            const heirs: Wallegacy.HeirStruct[] = [
+                {heirAddress: heirOne, percent: 50 },
+                {heirAddress: heirOne, percent: 50 }
+            ]
+            await expect(wallegacy.connect(testator).createWill(heirs))
+            .to.emit(wallegacy, "WillCreated");
+        })
+    })
+})
+
+describe("Wallegacy GetWillByTestator", async function() {
+    let wallegacy: Wallegacy;
+    let testator: HardhatEthersSigner;
+    let heirOne: HardhatEthersSigner;
+    let heirTwo: HardhatEthersSigner;
+
+    beforeEach(async function () {
+        [testator, heirOne, heirTwo] = await ethers.getSigners();
+        wallegacy = await ethers.deployContract("Wallegacy");
+        await wallegacy.waitForDeployment();
+    })
+
+    describe("when no will are created", function(){
+        it("should reverts with custom error", async function() {
+            await expect(wallegacy.getWillByTestator()).
+            to.be.revertedWithCustomError(wallegacy, "Wallegacy__WillNotFound").withArgs(testator)            
+        })
+    })
+
+    describe("when a will is created", function(){
+        beforeEach(async function () {
+             const heirs: Wallegacy.HeirStruct[] = [
+                {heirAddress: heirOne, percent: 50 },
+                {heirAddress: heirOne, percent: 50 }
+            ]
+
+            await wallegacy.connect(testator).createWill(heirs)
+        })
+
+        it("should reverts with custom error", async function() {
+            const will = await wallegacy.connect(testator).getWillByTestator();
+            expect(will.testator).to.equal(testator);
+            expect(will.heirs.length).to.equal(2);
         })
     })
 })
