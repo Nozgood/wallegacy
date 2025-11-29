@@ -33,7 +33,7 @@ contract Wallegacy {
         WillStatus status;
         bool gasPayed;
         bool exists; // for getter function
-        Heir[] heirs;
+        Heir heirs;
     }
 
     struct Heir {
@@ -55,8 +55,8 @@ contract Wallegacy {
     constructor() {
     }
 
-    function getWillByTestator(address testatrorAddress) public view returns(Will memory) {
-        Will memory will = s_testatorToWill[testatrorAddress];
+    function getWillByTestator(address testatorAddress) public view returns(Will memory) {
+        Will memory will = s_testatorToWill[testatorAddress];
         
         if (!will.exists) {
             revert Wallegacy__WillNotFound();
@@ -66,8 +66,8 @@ contract Wallegacy {
     }
 
    /// @dev the status is always set to DRAFT on creation  
-    function createWill(Heir[] memory heirsParams) public returns(Will memory createdWill)  {
-        if (heirsParams.length <= 0) {
+    function createWill(Heir memory heirsParams) public returns(Will memory createdWill)  {
+        if (heirsParams.heirAddress == address(0)) {
             revert Wallegacy__NoHeirs();
         }
 

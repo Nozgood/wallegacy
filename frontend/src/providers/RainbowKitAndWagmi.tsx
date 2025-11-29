@@ -14,7 +14,7 @@ import {
 } from "@tanstack/react-query";
 
 const config = getDefaultConfig({
-  appName: 'Voting DApp',
+  appName: 'Wallegacy DApp',
   projectId: 'cd5e882efd372f6cba03a79d5145c099', // it seems not to be essential but we set it https://dashboard.reown.com/da31fbe9-3e1a-48a4-becb-3904ae766a7c/66a6c27a-fe93-4bc0-b645-ad36920daff8
   chains: [hardhat],
   ssr: true, // If your dApp uses server side rendering (SSR)
