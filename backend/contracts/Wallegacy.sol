@@ -33,7 +33,7 @@ contract Wallegacy {
         WillStatus status;
         bool gasPayed;
         bool exists; // for getter function
-        Heir heirs;
+        Heir[] heirs;
     }
 
     struct Heir {
@@ -51,6 +51,8 @@ contract Wallegacy {
 
     error Wallegacy__WillNotFound();
     error Wallegacy__NoHeirs();
+    error Wallegacy__HeirWithoutAddress(uint256 heirIndex);
+    error Wallegacy__NewWillNotGoodPercent(uint8 percent);
 
     constructor() {
     }
@@ -66,9 +68,26 @@ contract Wallegacy {
     }
 
    /// @dev the status is always set to DRAFT on creation  
-    function createWill(Heir memory heirsParams) public returns(Will memory createdWill)  {
-        if (heirsParams.heirAddress == address(0)) {
+    function createWill(Heir[] memory heirsParams) public returns(Will memory createdWill)  {
+        if (heirsParams.length == 0) {
             revert Wallegacy__NoHeirs();
+        }
+
+
+        uint8 totalPercent = 0;
+
+        // here we check if all heirs have a valid address 
+        // we also increment to total percent to validate that it is strictly equal to 100
+        for (uint256 i = 0; i < heirsParams.length; i++) {
+            if(heirsParams[i].heirAddress ==  address(0)) {
+                revert Wallegacy__HeirWithoutAddress(i);
+            }
+
+            totalPercent += heirsParams[i].percent;
+        }
+
+        if (totalPercent != 100) {
+            revert Wallegacy__NewWillNotGoodPercent(totalPercent);
         }
 
         s_testatorToWill[msg.sender] = Will({
