@@ -18,6 +18,7 @@ contract WallegacySBT is ERC721 {
     error SBT__NoWallegacyContract();
     error SBT__TestatorAlreadyHasSBT(address testatorAddress);
     error SBT_NoSBTFound(address testatorAddress);
+    error SBT__TransferNotAllowed();
     
     modifier onlyWallegacyContract() {
         if (msg.sender != wallegacyContract) {
@@ -59,5 +60,23 @@ contract WallegacySBT is ERC721 {
         _burn(tokenID);
 
         emit SBTBurned(testatorAddress, tokenID);
+    }
+
+    /// we turn off transfer form to make it SBT
+    function transferFrom(address, address, uint256) public virtual override {
+        revert SBT__TransferNotAllowed();
+    }
+
+    /// we turn it off to to make it a SBT
+    function safeTransferFrom(address, address, uint256, bytes memory) public virtual override {
+        revert SBT__TransferNotAllowed();
+    } 
+
+    function approve(address, uint256) public virtual override {
+        revert SBT__TransferNotAllowed();
+    }
+
+    function setApprovalForAll(address, bool) public virtual override {
+        revert SBT__TransferNotAllowed();
     }
 }
