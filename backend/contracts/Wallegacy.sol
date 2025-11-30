@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import "./WallegacySBT.sol";
+
 /*
   Contract elements should be laid out in the following order:
     1. Pragma statements
@@ -41,9 +43,11 @@ contract Wallegacy {
         uint8 percent;
     }
 
-    mapping(address => Will) private s_testatorToWill; 
-    mapping (address => uint256) s_testatorToValueLocked;
-    mapping(address => bool) s_testators;
+    WallegacySBT public sbtContract;
+
+    mapping(address => Will) private s_testatorToWill;
+    mapping(address => uint256) private s_testatorToValueLocked;
+    mapping(address => bool) private s_testators;
 
     // events
 
@@ -52,6 +56,8 @@ contract Wallegacy {
     event LegacySentToHeir(address indexed heirAddress);
     event LegacySent(address indexed testatorAddress);
     event WillCancelled(address indexed testatorAddress);
+
+    event SBTContractSet(address indexed sbtAddess);
 
     // errors
 
@@ -62,23 +68,46 @@ contract Wallegacy {
     error Wallegacy__NotEnoughAmount();
     error Wallegacy__WillStatusNotCorrect();
     error Wallegacy__WillNoValueLocked(address testatorAddress);
-    error Wallegacy__ErrorSendingLegacy(address testatorAddress, address heirAddress, uint256 heirAmount);
+    error Wallegacy__ErrorSendingLegacy(
+        address testatorAddress,
+        address heirAddress,
+        uint256 heirAmount
+    );
     error Wallegacy__WillDone();
     error Wallegacy__NoTestator();
+    error Wallegacy__TestatorAlreadyHasWill(address testatorAddress);
 
-    constructor() {
+    error WallegacySBT__NoAddress();
+    error WallegacySBT__NotSet();
+
+    constructor() {}
+
+    function setSBTContract(address _sbtContract) external {
+        if (_sbtContract == address(0)) {
+            revert WallegacySBT__NoAddress();
+        }
+
+        sbtContract = WallegacySBT(_sbtContract);
+        emit SBTContractSet(_sbtContract);
     }
 
-    modifier isTestator() {
-        if (!s_testators[msg.sender])  {
+    modifier onlyTestator() {
+        if (!s_testators[msg.sender]) {
             revert Wallegacy__NoTestator();
         }
         _;
     }
 
-    function getWill() public view isTestator returns(Will memory) {
+    modifier onlyWithSBTContractSet() {
+        if (address(sbtContract) == address(0)) {
+            revert WallegacySBT__NotSet();
+        }
+        _;
+    }
+
+    function getWill() public view onlyTestator returns (Will memory) {
         Will memory will = s_testatorToWill[msg.sender];
-        
+
         if (!will.exists) {
             revert Wallegacy__WillNotFound(msg.sender);
         }
@@ -90,9 +119,9 @@ contract Wallegacy {
         return will;
     }
 
-    function getLockedValue() public view returns(uint256) {
-         return s_testatorToValueLocked[msg.sender];
-    } 
+    function getLockedValue() public view returns (uint256) {
+        return s_testatorToValueLocked[msg.sender];
+    }
 
     /// todo: add a check if Will exists here to allow people to fund the contract ?
     function lockTestatorFunds() public payable {
@@ -106,24 +135,32 @@ contract Wallegacy {
         emit TestatorValueLocked(msg.sender, msg.value);
     }
 
-   /// @dev the status is always set to DRAFT on creation  
-   /// TODO: add a check if the user has set multiple heirs with the same address ?
-    function createWill(Heir[] memory heirsParams) public payable returns(Will memory createdWill)  {
+    function isTestator() external view returns (bool) {
+        return s_testators[msg.sender];
+    }
+
+    /// @dev the status is always set to DRAFT on creation
+    /// TODO: add a check if the user has set multiple heirs with the same address ?
+    function createWill(
+        Heir[] memory heirsParams
+    ) public payable onlyWithSBTContractSet {
+        if (s_testators[msg.sender] == true) {
+            revert Wallegacy__TestatorAlreadyHasWill(msg.sender);
+        }
+
         if (heirsParams.length == 0) {
             revert Wallegacy__NoHeirs();
         }
 
         if (msg.value <= 0) {
             revert Wallegacy__NotEnoughAmount();
-        } 
-
+        }
 
         uint8 totalPercent = 0;
-
-        // here we check if all heirs have a valid address 
+        // here we check if all heirs have a valid address
         // we also increment to total percent to validate that it is strictly equal to 100
         for (uint256 i = 0; i < heirsParams.length; i++) {
-            if(heirsParams[i].heirAddress ==  address(0)) {
+            if (heirsParams[i].heirAddress == address(0)) {
                 revert Wallegacy__HeirWithoutAddress(i);
             }
 
@@ -139,20 +176,20 @@ contract Wallegacy {
 
         s_testatorToWill[msg.sender] = Will({
             testator: msg.sender,
-            status: WillStatus.SAVED, 
+            status: WillStatus.SAVED,
             gasPayed: false,
             exists: true,
             heirs: heirsParams
         });
 
+        sbtContract.mint(msg.sender);
+
         s_testators[msg.sender] = true;
 
-        emit WillCreated(msg.sender); 
-
-        return s_testatorToWill[msg.sender];
+        emit WillCreated(msg.sender);
     }
 
-    function cancelWill() public isTestator {
+    function cancelWill() public onlyTestator onlyWithSBTContractSet {
         Will storage testatorWill = s_testatorToWill[msg.sender];
         if (testatorWill.status == WillStatus.DONE) {
             revert Wallegacy__WillDone();
@@ -162,10 +199,11 @@ contract Wallegacy {
         testatorWill.status = WillStatus.CANCELLED;
         testatorWill.exists = false;
         s_testators[msg.sender] = false;
-        
-        emit WillCancelled(msg.sender); 
+
+        sbtContract.burn(msg.sender);
+
+        emit WillCancelled(msg.sender);
     }
-    
 
     /// todo manage correctly the rest
     function sendLegacyToHeirs(address testatorAddress) private {
@@ -177,7 +215,7 @@ contract Wallegacy {
         if (testatorWill.status != WillStatus.SAVED) {
             revert Wallegacy__WillStatusNotCorrect();
         }
-        
+
         uint256 valueLocked = s_testatorToValueLocked[testatorAddress];
         if (valueLocked == 0) {
             revert Wallegacy__WillNoValueLocked(testatorAddress);
@@ -194,17 +232,23 @@ contract Wallegacy {
         s_testatorToValueLocked[testatorAddress] = 0;
 
         // we compute the amount to send and we send it
-        for (uint256 i=0; i < testatorWill.heirs.length; i++) {
-            uint256 heirAmount = (valueLocked * testatorWill.heirs[i].percent) / 100;
+        for (uint256 i = 0; i < testatorWill.heirs.length; i++) {
+            uint256 heirAmount = (valueLocked * testatorWill.heirs[i].percent) /
+                100;
 
-            (bool success, ) = testatorWill.heirs[i].heirAddress.call{value: heirAmount}("");
+            (bool success, ) = testatorWill.heirs[i].heirAddress.call{
+                value: heirAmount
+            }("");
             if (!success) {
-                revert Wallegacy__ErrorSendingLegacy(testatorAddress, testatorWill.heirs[i].heirAddress, heirAmount);
+                revert Wallegacy__ErrorSendingLegacy(
+                    testatorAddress,
+                    testatorWill.heirs[i].heirAddress,
+                    heirAmount
+                );
             }
             emit LegacySentToHeir(testatorWill.heirs[i].heirAddress);
         }
 
-
         emit LegacySent(testatorAddress);
-    } 
+    }
 }

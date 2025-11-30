@@ -62,20 +62,22 @@ contract WallegacySBT is ERC721 {
         emit SBTBurned(testatorAddress, tokenID);
     }
 
-    /// we turn off transfer form to make it SBT
+    /// @dev we turn transferForm OFF to make it SBT
     function transferFrom(address, address, uint256) public virtual override {
         revert SBT__TransferNotAllowed();
     }
 
-    /// we turn it off to to make it a SBT
+    /// @dev we turn safeTransferForm OFF to to make it a SBT
     function safeTransferFrom(address, address, uint256, bytes memory) public virtual override {
         revert SBT__TransferNotAllowed();
     } 
 
+    /// @dev we turn approve OFF to to make it a SBT
     function approve(address, uint256) public virtual override {
         revert SBT__TransferNotAllowed();
     }
 
+    /// @dev we turn setApprovalForAll OFF to to make it a SBT
     function setApprovalForAll(address, bool) public virtual override {
         revert SBT__TransferNotAllowed();
     }
