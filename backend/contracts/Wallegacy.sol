@@ -48,6 +48,8 @@ contract Wallegacy {
 
     event WillCreated(address indexed testator);
     event TestatorValueLocked(address indexed testator, uint256 amount);
+    event LegacySentToHeir(address indexed heirAddress);
+    event LegacySent(address indexed testatorAddress);
 
     // errors
 
@@ -56,12 +58,15 @@ contract Wallegacy {
     error Wallegacy__HeirWithoutAddress(uint256 heirIndex);
     error Wallegacy__NewWillNotGoodPercent(uint8 percent);
     error Wallegacy__NotEnoughAmount();
+    error Wallegacy__WillStatusNotCorrect();
+    error Wallegacy__WillNoValueLocked(address testatorAddress);
+    error Wallegacy__ErrorSendingLegacy(address testatorAddress, address heirAddress, uint256 heirAmount);
 
     constructor() {
     }
 
 
-    function getWillByTestator() public view returns(Will memory) {
+    function getWill() public view returns(Will memory) {
         Will memory will = s_testatorToWill[msg.sender];
         
         if (!will.exists) {
@@ -75,7 +80,8 @@ contract Wallegacy {
          return s_testatorToValueLocked[msg.sender];
     } 
 
-    function fundTestator() public payable {
+    /// todo: add a check if Will exists here to allow people to fund the contract ?
+    function lockTestatorFunds() public payable {
         // revert with custom errors is more gas efficient than require
         if (msg.value <= 0) {
             revert Wallegacy__NotEnoughAmount();
@@ -87,6 +93,7 @@ contract Wallegacy {
     }
 
    /// @dev the status is always set to DRAFT on creation  
+   /// TODO: add a check if the user has set multiple heirs with the same address ?
     function createWill(Heir[] memory heirsParams) public payable returns(Will memory createdWill)  {
         if (heirsParams.length == 0) {
             revert Wallegacy__NoHeirs();
@@ -114,7 +121,7 @@ contract Wallegacy {
         }
 
         // lock the value of the Testator
-        fundTestator();
+        lockTestatorFunds();
 
         s_testatorToWill[msg.sender] = Will({
             testator: msg.sender,
@@ -128,4 +135,46 @@ contract Wallegacy {
 
         return s_testatorToWill[msg.sender];
     }
+    
+
+    /// todo manage correctly the rest
+    function sendLegacyToHeirs(address testatorAddress) private {
+        Will storage testatorWill = s_testatorToWill[testatorAddress];
+        if (!testatorWill.exists) {
+            revert Wallegacy__WillNotFound(testatorAddress);
+        }
+
+        if (testatorWill.status != WillStatus.SAVED) {
+            revert Wallegacy__WillStatusNotCorrect();
+        }
+        
+        uint256 valueLocked = s_testatorToValueLocked[testatorAddress];
+        if (valueLocked == 0) {
+            revert Wallegacy__WillNoValueLocked(testatorAddress);
+        }
+
+        if (testatorWill.heirs.length == 0) {
+            revert Wallegacy__NoHeirs();
+        }
+
+        // we first change the state of the contract before sending ETH to avoid reentrancy
+        // pattern Check Effect Interaction (CEI)
+        // we also can use OpenZeppelin library
+        testatorWill.status = WillStatus.DONE;
+        s_testatorToValueLocked[testatorAddress] = 0;
+
+        // we compute the amount to send and we send it
+        for (uint256 i=0; i < testatorWill.heirs.length; i++) {
+            uint256 heirAmount = (valueLocked * testatorWill.heirs[i].percent) / 100;
+
+            (bool success, ) = testatorWill.heirs[i].heirAddress.call{value: heirAmount}("");
+            if (!success) {
+                revert Wallegacy__ErrorSendingLegacy(testatorAddress, testatorWill.heirs[i].heirAddress, heirAmount);
+            }
+            emit LegacySentToHeir(testatorWill.heirs[i].heirAddress);
+        }
+
+
+        emit LegacySent(testatorAddress);
+    } 
 }
