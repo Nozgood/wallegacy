@@ -43,6 +43,7 @@ contract Wallegacy {
 
     mapping(address => Will) private s_testatorToWill; 
     mapping (address => uint256) s_testatorToValueLocked;
+    mapping(address => bool) s_testators;
 
     // events
 
@@ -50,6 +51,7 @@ contract Wallegacy {
     event TestatorValueLocked(address indexed testator, uint256 amount);
     event LegacySentToHeir(address indexed heirAddress);
     event LegacySent(address indexed testatorAddress);
+    event WillCancelled(address indexed testatorAddress);
 
     // errors
 
@@ -61,17 +63,29 @@ contract Wallegacy {
     error Wallegacy__WillStatusNotCorrect();
     error Wallegacy__WillNoValueLocked(address testatorAddress);
     error Wallegacy__ErrorSendingLegacy(address testatorAddress, address heirAddress, uint256 heirAmount);
+    error Wallegacy__WillDone();
+    error Wallegacy__NoTestator();
 
     constructor() {
     }
 
+    modifier isTestator() {
+        if (!s_testators[msg.sender])  {
+            revert Wallegacy__NoTestator();
+        }
+        _;
+    }
 
-    function getWill() public view returns(Will memory) {
+    function getWill() public view isTestator returns(Will memory) {
         Will memory will = s_testatorToWill[msg.sender];
         
         if (!will.exists) {
             revert Wallegacy__WillNotFound(msg.sender);
         }
+
+        // if (will.status == WillStatus.DONE) {
+        //     revert Wallegacy__WillDone();
+        // }
 
         return will;
     }
@@ -131,9 +145,25 @@ contract Wallegacy {
             heirs: heirsParams
         });
 
+        s_testators[msg.sender] = true;
+
         emit WillCreated(msg.sender); 
 
         return s_testatorToWill[msg.sender];
+    }
+
+    function cancelWill() public isTestator {
+        Will storage testatorWill = s_testatorToWill[msg.sender];
+        if (testatorWill.status == WillStatus.DONE) {
+            revert Wallegacy__WillDone();
+        }
+
+        delete testatorWill.heirs;
+        testatorWill.status = WillStatus.CANCELLED;
+        testatorWill.exists = false;
+        s_testators[msg.sender] = false;
+        
+        emit WillCancelled(msg.sender); 
     }
     
 

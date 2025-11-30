@@ -92,7 +92,7 @@ describe("Wallegacy getWill", async function() {
     describe("when no will are created", function(){
         it("should reverts with custom error", async function() {
             await expect(wallegacy.getWill()).
-            to.be.revertedWithCustomError(wallegacy, "Wallegacy__WillNotFound").withArgs(testator)            
+            to.be.revertedWithCustomError(wallegacy, "Wallegacy__NoTestator")            
         })
     })
 
