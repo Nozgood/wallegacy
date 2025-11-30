@@ -10,17 +10,30 @@ describe("Wallegacy Create Will", async function() {
     let testator: HardhatEthersSigner;
     let heirOne: HardhatEthersSigner;
     let heirTwo: HardhatEthersSigner;
+    let depositAmount: bigint;
 
     beforeEach(async function () {
+        depositAmount = ethers.parseEther("2.0");
         [testator, heirOne, heirTwo] = await ethers.getSigners();
         wallegacy = await ethers.deployContract("Wallegacy");
         await wallegacy.waitForDeployment();
     })
 
-    describe("when no address is provided", function() {
+    describe("when no heirs is provided", function() {
         it("should revert with a custom error", async function() {
             await expect(wallegacy.connect(testator).createWill([]))
             .to.be.revertedWithCustomError(wallegacy, "Wallegacy__NoHeirs");
+        })
+    })
+
+    describe("when no ETH is sent", function() {
+        it("should revert with a custom error", async function() {
+            const heirs: Wallegacy.HeirStruct[] = [
+                {heirAddress: ethers.ZeroAddress, percent: 100 }
+            ]
+
+            await expect(wallegacy.connect(testator).createWill(heirs))
+            .to.be.revertedWithCustomError(wallegacy, "Wallegacy__NotEnoughAmount");
         })
     })
 
@@ -29,7 +42,9 @@ describe("Wallegacy Create Will", async function() {
             const heirs: Wallegacy.HeirStruct[] = [
                 {heirAddress: ethers.ZeroAddress, percent: 100 }
             ]
-            await expect(wallegacy.connect(testator).createWill(heirs))
+
+
+            await expect(wallegacy.connect(testator).createWill(heirs, { value: depositAmount }))
             .to.be.revertedWithCustomError(wallegacy, "Wallegacy__HeirWithoutAddress").withArgs(0);
         })
     })
@@ -40,7 +55,7 @@ describe("Wallegacy Create Will", async function() {
                 {heirAddress: heirOne, percent: 100 },
                 {heirAddress: heirOne, percent: 100 }
             ]
-            await expect(wallegacy.connect(testator).createWill(heirs))
+            await expect(wallegacy.connect(testator).createWill(heirs, { value: depositAmount }))
             .to.be.revertedWithCustomError(wallegacy, "Wallegacy__NewWillNotGoodPercent").withArgs(200);
         })
     })
@@ -51,7 +66,7 @@ describe("Wallegacy Create Will", async function() {
                 {heirAddress: heirOne, percent: 50 },
                 {heirAddress: heirOne, percent: 50 }
             ]
-            await expect(wallegacy.connect(testator).createWill(heirs))
+            await expect(wallegacy.connect(testator).createWill(heirs, { value: depositAmount }))
             .to.emit(wallegacy, "WillCreated");
         })
     })
@@ -83,7 +98,9 @@ describe("Wallegacy GetWillByTestator", async function() {
                 {heirAddress: heirOne, percent: 50 }
             ]
 
-            await wallegacy.connect(testator).createWill(heirs)
+            const depositAmout = ethers.parseEther("2.0")
+
+            await wallegacy.connect(testator).createWill(heirs, { value: depositAmout })
         })
 
         it("should reverts with custom error", async function() {

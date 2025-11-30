@@ -42,10 +42,12 @@ contract Wallegacy {
     }
 
     mapping(address => Will) private s_testatorToWill; 
+    mapping (address => uint256) s_testatorToValueLocked;
 
     // events
 
-    event WillCreated();
+    event WillCreated(address indexed testator);
+    event TestatorValueLocked(address indexed testator, uint256 amount);
 
     // errors
 
@@ -53,12 +55,12 @@ contract Wallegacy {
     error Wallegacy__NoHeirs();
     error Wallegacy__HeirWithoutAddress(uint256 heirIndex);
     error Wallegacy__NewWillNotGoodPercent(uint8 percent);
+    error Wallegacy__NotEnoughAmount();
 
     constructor() {
     }
 
 
-    // todo: should the msg.sender be used instead of address as parameter ? because i can retrieve will infos of others
     function getWillByTestator() public view returns(Will memory) {
         Will memory will = s_testatorToWill[msg.sender];
         
@@ -69,11 +71,30 @@ contract Wallegacy {
         return will;
     }
 
+    function getLockedValue() public view returns(uint256) {
+         return s_testatorToValueLocked[msg.sender];
+    } 
+
+    function fundTestator() public payable {
+        // revert with custom errors is more gas efficient than require
+        if (msg.value <= 0) {
+            revert Wallegacy__NotEnoughAmount();
+        }
+
+        s_testatorToValueLocked[msg.sender] = msg.value;
+
+        emit TestatorValueLocked(msg.sender, msg.value);
+    }
+
    /// @dev the status is always set to DRAFT on creation  
-    function createWill(Heir[] memory heirsParams) public returns(Will memory createdWill)  {
+    function createWill(Heir[] memory heirsParams) public payable returns(Will memory createdWill)  {
         if (heirsParams.length == 0) {
             revert Wallegacy__NoHeirs();
         }
+
+        if (msg.value <= 0) {
+            revert Wallegacy__NotEnoughAmount();
+        } 
 
 
         uint8 totalPercent = 0;
@@ -92,15 +113,18 @@ contract Wallegacy {
             revert Wallegacy__NewWillNotGoodPercent(totalPercent);
         }
 
+        // lock the value of the Testator
+        fundTestator();
+
         s_testatorToWill[msg.sender] = Will({
             testator: msg.sender,
-            status: WillStatus.DRAFT, 
+            status: WillStatus.SAVED, 
             gasPayed: false,
             exists: true,
             heirs: heirsParams
         });
 
-        emit WillCreated(); 
+        emit WillCreated(msg.sender); 
 
         return s_testatorToWill[msg.sender];
     }
