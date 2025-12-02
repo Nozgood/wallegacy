@@ -9,9 +9,11 @@ const { ethers, networkHelpers } = await hre.network.connect();
 describe("Wallegacy setSBTContract", async function () {
     let wallegacy: Wallegacy;
     let sbtContract: WallegacySBT;
+    let relayerAddress: HardhatEthersSigner;
 
     beforeEach(async function () {
-        wallegacy = await ethers.deployContract("Wallegacy");
+        [relayerAddress] = await ethers.getSigners();
+        wallegacy = await ethers.deployContract("Wallegacy", [relayerAddress]);
     })
 
     describe("when the sbt is not deployed", function () {
@@ -41,12 +43,13 @@ describe("Wallegacy createWill", async function () {
     let heirOne: HardhatEthersSigner;
     let heirTwo: HardhatEthersSigner;
     let depositAmount: bigint;
+    let relayerAddress: HardhatEthersSigner;
 
     beforeEach(async function () {
         depositAmount = ethers.parseEther("2.0");
-        [testator, heirOne, heirTwo] = await ethers.getSigners();
+        [testator, heirOne, heirTwo, relayerAddress] = await ethers.getSigners();
 
-        wallegacy = await ethers.deployContract("Wallegacy");
+        wallegacy = await ethers.deployContract("Wallegacy", [relayerAddress]);
         sbtContract = await ethers.deployContract("WallegacySBT", ["Wallegacy SBT", "WLSBT", "localhost.com", wallegacy.getAddress()]);
 
         await wallegacy.waitForDeployment();
@@ -54,14 +57,14 @@ describe("Wallegacy createWill", async function () {
 
     })
 
-    describe("when the SBT is not set", function() {
+    describe("when the SBT is not set", function () {
         it("should reverts immediatly", async function () {
             await expect(wallegacy.connect(testator).createWill([]))
                 .to.be.revertedWithCustomError(wallegacy, "WallegacySBT__NotSet")
         })
     })
 
-    describe("when the SBT contract is set", function() {
+    describe("when the SBT contract is set", function () {
         beforeEach(async function () {
             await wallegacy.setSBTContract(sbtContract);
         })
@@ -156,10 +159,11 @@ describe("Wallegacy getWill", async function () {
     let testator: HardhatEthersSigner;
     let heirOne: HardhatEthersSigner;
     let heirTwo: HardhatEthersSigner;
+    let relayerAddress: HardhatEthersSigner;
 
     beforeEach(async function () {
-        [testator, heirOne, heirTwo] = await ethers.getSigners();
-        wallegacy = await ethers.deployContract("Wallegacy");
+        [testator, heirOne, heirTwo, relayerAddress] = await ethers.getSigners();
+        wallegacy = await ethers.deployContract("Wallegacy", [relayerAddress]);
         await wallegacy.waitForDeployment();
 
 
@@ -204,10 +208,11 @@ describe("Wallegacy getValueLocked", async function () {
     let testator: HardhatEthersSigner;
     let heirOne: HardhatEthersSigner;
     let heirTwo: HardhatEthersSigner;
+    let relayerAddress: HardhatEthersSigner;
 
     beforeEach(async function () {
-        [testator, heirOne, heirTwo] = await ethers.getSigners();
-        wallegacy = await ethers.deployContract("Wallegacy");
+        [testator, heirOne, heirTwo, relayerAddress] = await ethers.getSigners();
+        wallegacy = await ethers.deployContract("Wallegacy", [relayerAddress]);
         sbtContract = await ethers.deployContract("WallegacySBT", ["Wallegacy SBT", "WLSBT", "localhost", wallegacy.getAddress()])
         await wallegacy.setSBTContract(sbtContract);
         await wallegacy.waitForDeployment();
@@ -225,6 +230,108 @@ describe("Wallegacy getValueLocked", async function () {
             const valueLocked = await wallegacy.connect(heirOne).getLockedValue();
             expect(valueLocked).to.equal(0);
             expect(valueLocked).to.equal(ethers.parseEther("0"));
+        })
+    })
+})
+
+describe("Wallegacy CancelWill", async function () {
+    let wallegacy: Wallegacy;
+    let sbtContract: WallegacySBT;
+    let testator: HardhatEthersSigner;
+    let heir: HardhatEthersSigner;
+    let relayerAddress: HardhatEthersSigner;
+
+    beforeEach(async function () {
+        [testator, heir, relayerAddress] = await ethers.getSigners();
+        wallegacy = await ethers.deployContract("Wallegacy", [relayerAddress]);
+        sbtContract = await ethers.deployContract(
+            "WallegacySBT", ["Wallegacy SBT", "WLSBT", "localhost", wallegacy.getAddress()]
+        )
+    })
+
+    describe("when the sender is not registered as a testator", function () {
+        it("should reverts with Wallegacy__NoTestator error", async function () {
+            await expect(wallegacy.connect(testator).cancelWill())
+                .to.be.revertedWithCustomError(wallegacy, "Wallegacy__NoTestator")
+        })
+    })
+
+    describe("when the testator is registered", function () {
+        beforeEach(async function () {
+            const heirParams: Wallegacy.HeirStruct[] = [{
+                heirAddress: heir,
+                percent: 100,
+            }]
+            await wallegacy.setSBTContract(sbtContract)
+            await wallegacy.connect(testator).createWill(heirParams, { value: ethers.parseEther("1.1") });
+        })
+        it("should cancel his will and burn his token", async function () {
+            await expect(wallegacy.connect(testator).cancelWill())
+                .to.emit(wallegacy, "WillCancelled").withArgs(testator.address)
+                .and.to.emit(sbtContract, "SBTBurned")
+
+            // we try to get the Will after cancel to verify 
+            await expect(wallegacy.connect(testator).getWill())
+                .to.be.revertedWithCustomError(wallegacy, "Wallegacy__NoTestator")
+        })
+    })
+})
+
+describe("Wallegacy sendLegacyToHeirs", async function () {
+    let wallegacy: Wallegacy;
+    let sbtContract: WallegacySBT;
+    let testator: HardhatEthersSigner;
+    let heirOne: HardhatEthersSigner;
+    let heirTwo: HardhatEthersSigner;
+    let relayerAddress: HardhatEthersSigner;
+
+    beforeEach(async function () {
+        [testator, heirOne, heirTwo, relayerAddress] = await ethers.getSigners();
+        wallegacy = await ethers.deployContract("Wallegacy", [relayerAddress]);
+        sbtContract = await ethers.deployContract(
+            "WallegacySBT", ["Wallegacy SBT", "WLSBT", "localhost", wallegacy.getAddress()]
+        )
+        await wallegacy.setSBTContract(sbtContract);
+        await wallegacy.waitForDeployment();
+        const heirs: Wallegacy.HeirStruct[] = [
+            { heirAddress: heirOne, percent: 50 },
+            { heirAddress: heirTwo, percent: 50 }
+        ]
+
+        const depositAmout = ethers.parseEther("2.0")
+        await wallegacy.connect(testator).createWill(heirs, { value: depositAmout })
+    })
+
+
+    describe("when the msg sender is not the relayer", function () {
+        it("should reverts with a Wallegacy__Unauthorized error", async function () {
+            await expect(wallegacy.connect(heirOne).triggerLegacyProcess(testator))
+                .to.be.revertedWithCustomError(wallegacy, "Wallegacy__Unauthorized");
+        })
+    })
+
+    describe("when the testator address is not registered as testator", function () {
+        it("should reverts with Wallegacy__NoTestator error", async function () {
+            await expect(wallegacy.connect(relayerAddress).triggerLegacyProcess(heirOne))
+                .to.be.revertedWithCustomError(wallegacy, "Wallegacy__NoTestator");
+        })
+    })
+
+    describe("when the process runs correctly", function () {
+        it("the heirs should receive their legs", async function () {
+            const heirOneBalanceBefore = await ethers.provider.getBalance(heirOne)
+            const heirTwoBalanceBefore = await ethers.provider.getBalance(heirOne)
+
+            await expect(wallegacy.connect(relayerAddress).triggerLegacyProcess(testator))
+                .to.emit(wallegacy, "LegacySentToHeir").withArgs(heirOne)
+                .and.to.emit(wallegacy, "LegacySentToHeir").withArgs(heirTwo)
+                .and.to.emit(wallegacy, "LegacySent").withArgs(testator)
+
+            const heirOneBalanceAfter = await ethers.provider.getBalance(heirOne)
+            const heirTwoBalanceAfter = await ethers.provider.getBalance(heirOne)
+
+            expect(heirOneBalanceAfter - heirOneBalanceBefore).to.equal(ethers.parseEther("1.0"))
+            expect(heirTwoBalanceAfter - heirTwoBalanceBefore).to.equal(ethers.parseEther("1.0"))
         })
     })
 })

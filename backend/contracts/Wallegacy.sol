@@ -43,11 +43,13 @@ contract Wallegacy {
         uint8 percent;
     }
 
-    WallegacySBT public sbtContract;
+    address private immutable i_relayerAddress;
 
     mapping(address => Will) private s_testatorToWill;
     mapping(address => uint256) private s_testatorToValueLocked;
     mapping(address => bool) private s_testators;
+
+    WallegacySBT public sbtContract;
 
     // events
 
@@ -80,7 +82,11 @@ contract Wallegacy {
     error WallegacySBT__NoAddress();
     error WallegacySBT__NotSet();
 
-    constructor() {}
+    error Wallegacy__Unauthorized();
+
+    constructor(address relayerAddress) {
+        i_relayerAddress = relayerAddress;
+    }
 
     function setSBTContract(address _sbtContract) external {
         if (_sbtContract == address(0)) {
@@ -89,6 +95,13 @@ contract Wallegacy {
 
         sbtContract = WallegacySBT(_sbtContract);
         emit SBTContractSet(_sbtContract);
+    }
+
+    modifier onlyRelayer() {
+        if (msg.sender != i_relayerAddress) {
+            revert Wallegacy__Unauthorized();
+        }
+        _;
     }
 
     modifier onlyTestator() {
@@ -130,7 +143,7 @@ contract Wallegacy {
             revert Wallegacy__NotEnoughAmount();
         }
 
-        s_testatorToValueLocked[msg.sender] = msg.value;
+        s_testatorToValueLocked[msg.sender] += msg.value;
 
         emit TestatorValueLocked(msg.sender, msg.value);
     }
@@ -144,7 +157,7 @@ contract Wallegacy {
     function createWill(
         Heir[] memory heirsParams
     ) public payable onlyWithSBTContractSet {
-        if (s_testators[msg.sender] == true) {
+        if (s_testators[msg.sender]) {
             revert Wallegacy__TestatorAlreadyHasWill(msg.sender);
         }
 
@@ -190,14 +203,9 @@ contract Wallegacy {
     }
 
     function cancelWill() public onlyTestator onlyWithSBTContractSet {
-        Will storage testatorWill = s_testatorToWill[msg.sender];
-        if (testatorWill.status == WillStatus.DONE) {
-            revert Wallegacy__WillDone();
-        }
-
-        delete testatorWill.heirs;
-        testatorWill.status = WillStatus.CANCELLED;
-        testatorWill.exists = false;
+        delete s_testatorToWill[msg.sender].heirs;
+        s_testatorToWill[msg.sender].exists = false;
+        s_testatorToWill[msg.sender].status = WillStatus.CANCELLED;
         s_testators[msg.sender] = false;
 
         sbtContract.burn(msg.sender);
@@ -205,25 +213,18 @@ contract Wallegacy {
         emit WillCancelled(msg.sender);
     }
 
+    function triggerLegacyProcess(address testatorAddress) public onlyRelayer {
+        sendLegacyToHeirs(testatorAddress);
+    }
+
     /// todo manage correctly the rest
     function sendLegacyToHeirs(address testatorAddress) private {
+        if (!s_testators[testatorAddress]) {
+            revert Wallegacy__NoTestator();
+        }
+
         Will storage testatorWill = s_testatorToWill[testatorAddress];
-        if (!testatorWill.exists) {
-            revert Wallegacy__WillNotFound(testatorAddress);
-        }
-
-        if (testatorWill.status != WillStatus.SAVED) {
-            revert Wallegacy__WillStatusNotCorrect();
-        }
-
         uint256 valueLocked = s_testatorToValueLocked[testatorAddress];
-        if (valueLocked == 0) {
-            revert Wallegacy__WillNoValueLocked(testatorAddress);
-        }
-
-        if (testatorWill.heirs.length == 0) {
-            revert Wallegacy__NoHeirs();
-        }
 
         // we first change the state of the contract before sending ETH to avoid reentrancy
         // pattern Check Effect Interaction (CEI)
