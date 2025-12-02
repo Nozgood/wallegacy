@@ -51,17 +51,12 @@ contract Wallegacy {
 
     WallegacySBT public sbtContract;
 
-    // events
-
     event WillCreated(address indexed testator);
     event TestatorValueLocked(address indexed testator, uint256 amount);
     event LegacySentToHeir(address indexed heirAddress);
     event LegacySent(address indexed testatorAddress);
     event WillCancelled(address indexed testatorAddress);
-
     event SBTContractSet(address indexed sbtAddess);
-
-    // errors
 
     error Wallegacy__WillNotFound(address testatorAddress);
     error Wallegacy__NoHeirs();
@@ -78,10 +73,8 @@ contract Wallegacy {
     error Wallegacy__WillDone();
     error Wallegacy__NoTestator();
     error Wallegacy__TestatorAlreadyHasWill(address testatorAddress);
-
     error WallegacySBT__NoAddress();
     error WallegacySBT__NotSet();
-
     error Wallegacy__Unauthorized();
 
     constructor(address relayerAddress) {
