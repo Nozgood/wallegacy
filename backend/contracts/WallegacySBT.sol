@@ -8,7 +8,7 @@ contract WallegacySBT is ERC721 {
     string private _baseTokenURI;
     uint256 private _tokenIDCounter;
 
-    address public wallegacyContract; 
+    address public wallegacyContract;
 
     // events
     event SBTMinted(address indexed testatorAddress, uint256 indexed tokenID);
@@ -19,7 +19,7 @@ contract WallegacySBT is ERC721 {
     error SBT__TestatorAlreadyHasSBT(address testatorAddress);
     error SBT_NoSBTFound(address testatorAddress);
     error SBT__TransferNotAllowed();
-    
+
     modifier onlyWallegacyContract() {
         if (msg.sender != wallegacyContract) {
             revert SBT__NoWallegacyContract();
@@ -28,20 +28,20 @@ contract WallegacySBT is ERC721 {
     }
 
     constructor(
-        string memory name, 
-        string memory symbol, 
         string memory baseTokenURI,
         address _wallegacyContract
-        ) ERC721(name, symbol) {
-            _baseTokenURI = baseTokenURI;
-            wallegacyContract = _wallegacyContract;
+    ) ERC721("Wallegacy", "WLSBT") {
+        _baseTokenURI = baseTokenURI;
+        wallegacyContract = _wallegacyContract;
     }
 
-    function mint(address testatorAddress) external onlyWallegacyContract returns (uint256) {
+    function mint(
+        address testatorAddress
+    ) external onlyWallegacyContract returns (uint256) {
         if (balanceOf(testatorAddress) != 0) {
             revert SBT__TestatorAlreadyHasSBT(testatorAddress);
         }
-        
+
         uint256 tokenID = uint256(uint160(testatorAddress));
 
         _safeMint(testatorAddress, tokenID);
@@ -62,23 +62,19 @@ contract WallegacySBT is ERC721 {
         emit SBTBurned(testatorAddress, tokenID);
     }
 
-    /// @dev we turn transferForm OFF to make it SBT
-    function transferFrom(address, address, uint256) public virtual override {
-        revert SBT__TransferNotAllowed();
-    }
+    function _update(
+        address to,
+        uint256 tokenId,
+        address auth
+    ) internal virtual override returns (address) {
+        address from = _ownerOf(tokenId);
 
-    /// @dev we turn safeTransferForm OFF to to make it a SBT
-    function safeTransferFrom(address, address, uint256, bytes memory) public virtual override {
-        revert SBT__TransferNotAllowed();
-    } 
+        // Allow minting (from == address(0))
+        // Block any transfer or burn after minting
+        if (from != address(0) && to != from) {
+            revert("Soulbound: token is non-transferable");
+        }
 
-    /// @dev we turn approve OFF to to make it a SBT
-    function approve(address, uint256) public virtual override {
-        revert SBT__TransferNotAllowed();
-    }
-
-    /// @dev we turn setApprovalForAll OFF to to make it a SBT
-    function setApprovalForAll(address, bool) public virtual override {
-        revert SBT__TransferNotAllowed();
+        return super._update(to, tokenId, auth);
     }
 }
