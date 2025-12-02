@@ -62,6 +62,7 @@ contract WallegacySBT is ERC721 {
         emit SBTBurned(testatorAddress, tokenID);
     }
 
+    // override of update function to make transfer not possible
     function _update(
         address to,
         uint256 tokenId,
@@ -71,7 +72,7 @@ contract WallegacySBT is ERC721 {
 
         // Allow minting (from == address(0))
         // Block any transfer or burn after minting
-        if (from != address(0) && to != from) {
+        if (from != address(0) && to != address(0) && to != from) {
             revert("Soulbound: token is non-transferable");
         }
 

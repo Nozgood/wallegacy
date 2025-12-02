@@ -25,7 +25,7 @@ describe("Wallegacy setSBTContract", async function () {
 
     describe("when the sbt is deployed", function () {
         beforeEach(async function () {
-            sbtContract = await ethers.deployContract("WallegacySBT", ["Wallegacy SBT", "WLSBT", "localhost.com", wallegacy.getAddress()]);
+            sbtContract = await ethers.deployContract("WallegacySBT", ["localhost.com", wallegacy.getAddress()]);
         })
 
 
@@ -50,7 +50,7 @@ describe("Wallegacy createWill", async function () {
         [testator, heirOne, heirTwo, relayerAddress] = await ethers.getSigners();
 
         wallegacy = await ethers.deployContract("Wallegacy", [relayerAddress]);
-        sbtContract = await ethers.deployContract("WallegacySBT", ["Wallegacy SBT", "WLSBT", "localhost.com", wallegacy.getAddress()]);
+        sbtContract = await ethers.deployContract("WallegacySBT", ["localhost.com", wallegacy.getAddress()]);
 
         await wallegacy.waitForDeployment();
         await sbtContract.waitForDeployment();
@@ -185,7 +185,7 @@ describe("Wallegacy getWill", async function () {
             ]
 
             const depositAmout = ethers.parseEther("2.0")
-            sbtContract = await ethers.deployContract("WallegacySBT", ["Wallegacy SBT", "WLSBT", "localhost", wallegacy.getAddress()])
+            sbtContract = await ethers.deployContract("WallegacySBT", ["localhost", wallegacy.getAddress()])
             await sbtContract.waitForDeployment();
             await wallegacy.setSBTContract(sbtContract);
             await wallegacy.connect(testator).createWill(heirs, { value: depositAmout })
@@ -213,7 +213,7 @@ describe("Wallegacy getValueLocked", async function () {
     beforeEach(async function () {
         [testator, heirOne, heirTwo, relayerAddress] = await ethers.getSigners();
         wallegacy = await ethers.deployContract("Wallegacy", [relayerAddress]);
-        sbtContract = await ethers.deployContract("WallegacySBT", ["Wallegacy SBT", "WLSBT", "localhost", wallegacy.getAddress()])
+        sbtContract = await ethers.deployContract("WallegacySBT", ["localhost", wallegacy.getAddress()])
         await wallegacy.setSBTContract(sbtContract);
         await wallegacy.waitForDeployment();
         const heirs: Wallegacy.HeirStruct[] = [
@@ -245,7 +245,7 @@ describe("Wallegacy CancelWill", async function () {
         [testator, heir, relayerAddress] = await ethers.getSigners();
         wallegacy = await ethers.deployContract("Wallegacy", [relayerAddress]);
         sbtContract = await ethers.deployContract(
-            "WallegacySBT", ["Wallegacy SBT", "WLSBT", "localhost", wallegacy.getAddress()]
+            "WallegacySBT", ["localhost", wallegacy.getAddress()]
         )
     })
 
@@ -289,7 +289,7 @@ describe("Wallegacy sendLegacyToHeirs", async function () {
         [testator, heirOne, heirTwo, relayerAddress] = await ethers.getSigners();
         wallegacy = await ethers.deployContract("Wallegacy", [relayerAddress]);
         sbtContract = await ethers.deployContract(
-            "WallegacySBT", ["Wallegacy SBT", "WLSBT", "localhost", wallegacy.getAddress()]
+            "WallegacySBT", ["localhost", wallegacy.getAddress()]
         )
         await wallegacy.setSBTContract(sbtContract);
         await wallegacy.waitForDeployment();
