@@ -1,0 +1,30 @@
+name: test
+
+on:
+  push:
+    branches:
+      - "*"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node v22
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22.15.0
+
+      - name: Install Dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: Compile contracts
+        working-directory: ./backend
+        run: npx hardhat compile
+
+      - name: Run tests
+        working-directory: ./backend
+        run: npx hardhat test mocha --coverage
