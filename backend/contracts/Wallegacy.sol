@@ -36,6 +36,7 @@ contract Wallegacy {
         bool gasPayed;
         bool exists; // for getter function
         Heir[] heirs;
+        address notary;
     }
 
     struct Heir {
@@ -43,11 +44,13 @@ contract Wallegacy {
         uint8 percent;
     }
 
-    address private immutable i_relayerAddress;
+    //    address private immutable i_relayerAddress;
 
     mapping(address => Will) private s_testatorToWill;
     mapping(address => uint256) private s_testatorToValueLocked;
     mapping(address => bool) private s_testators;
+    mapping(address => uint256) private s_notaryToNumberOfWill;
+    mapping(address => bool) private s_notaries;
 
     WallegacySBT public sbtContract;
 
@@ -57,6 +60,8 @@ contract Wallegacy {
     event LegacySent(address indexed testatorAddress);
     event WillCancelled(address indexed testatorAddress);
     event SBTContractSet(address indexed sbtAddess);
+    event NotaryCancelWill(address indexed notaryAddress);
+    event NotaryNoMoreWill(address indexed notaryAddress);
 
     error Wallegacy__WillNotFound(address testatorAddress);
     error Wallegacy__NoHeirs();
@@ -76,22 +81,12 @@ contract Wallegacy {
     error WallegacySBT__NoAddress();
     error WallegacySBT__NotSet();
     error Wallegacy__Unauthorized();
+    error Wallegacy__NewWillMissingNotary();
 
-    constructor(address relayerAddress) {
-        i_relayerAddress = relayerAddress;
-    }
+    constructor() {}
 
-    function setSBTContract(address _sbtContract) external {
-        if (_sbtContract == address(0)) {
-            revert WallegacySBT__NoAddress();
-        }
-
-        sbtContract = WallegacySBT(_sbtContract);
-        emit SBTContractSet(_sbtContract);
-    }
-
-    modifier onlyRelayer() {
-        if (msg.sender != i_relayerAddress) {
+    modifier onlyNotary() {
+        if (!s_notaries[msg.sender]) {
             revert Wallegacy__Unauthorized();
         }
         _;
@@ -118,15 +113,24 @@ contract Wallegacy {
             revert Wallegacy__WillNotFound(msg.sender);
         }
 
-        // if (will.status == WillStatus.DONE) {
-        //     revert Wallegacy__WillDone();
-        // }
-
         return will;
     }
 
     function getLockedValue() public view returns (uint256) {
         return s_testatorToValueLocked[msg.sender];
+    }
+
+    function isNotary(address notaryAddress) public view returns (bool) {
+        return s_notaries[notaryAddress];
+    }
+
+    function setSBTContract(address _sbtContract) external {
+        if (_sbtContract == address(0)) {
+            revert WallegacySBT__NoAddress();
+        }
+
+        sbtContract = WallegacySBT(_sbtContract);
+        emit SBTContractSet(_sbtContract);
     }
 
     /// todo: add a check if Will exists here to allow people to fund the contract ?
@@ -148,7 +152,8 @@ contract Wallegacy {
     /// @dev the status is always set to DRAFT on creation
     /// TODO: add a check if the user has set multiple heirs with the same address ?
     function createWill(
-        Heir[] memory heirsParams
+        Heir[] memory heirsParams,
+        address notaryAddress
     ) public payable onlyWithSBTContractSet {
         if (s_testators[msg.sender]) {
             revert Wallegacy__TestatorAlreadyHasWill(msg.sender);
@@ -160,6 +165,10 @@ contract Wallegacy {
 
         if (msg.value <= 0) {
             revert Wallegacy__NotEnoughAmount();
+        }
+
+        if (notaryAddress == address(0)) {
+            revert Wallegacy__NewWillMissingNotary();
         }
 
         uint8 totalPercent = 0;
@@ -185,12 +194,18 @@ contract Wallegacy {
             status: WillStatus.SAVED,
             gasPayed: false,
             exists: true,
-            heirs: heirsParams
+            heirs: heirsParams,
+            notary: notaryAddress
         });
 
         sbtContract.mint(msg.sender);
 
         s_testators[msg.sender] = true;
+        s_notaryToNumberOfWill[notaryAddress]++;
+
+        if (!isNotary(notaryAddress)) {
+            s_notaries[notaryAddress] = true;
+        }
 
         emit WillCreated(msg.sender);
     }
@@ -201,12 +216,30 @@ contract Wallegacy {
         s_testatorToWill[msg.sender].status = WillStatus.CANCELLED;
         s_testators[msg.sender] = false;
 
+        address notaryAddress = s_testatorToWill[msg.sender].notary;
+        s_notaryToNumberOfWill[notaryAddress]--;
+        if (s_notaryToNumberOfWill[notaryAddress] == 0) {
+            s_notaries[notaryAddress] = false;
+        }
+
         sbtContract.burn(msg.sender);
 
         emit WillCancelled(msg.sender);
     }
 
-    function triggerLegacyProcess(address testatorAddress) public onlyRelayer {
+    // is it ok to set a revert in private function ?
+    function cancelNotary(address notaryAddress) private {
+        if (isNotary(notaryAddress)) {
+            s_notaryToNumberOfWill[notaryAddress]--;
+            emit NotaryCancelWill(notaryAddress);
+            if (s_notaryToNumberOfWill[notaryAddress] == 0) {
+                s_notaries[notaryAddress] = false;
+                emit NotaryNoMoreWill(notaryAddress);
+            }
+        }
+    }
+
+    function triggerLegacyProcess(address testatorAddress) public onlyNotary {
         sendLegacyToHeirs(testatorAddress);
     }
 
@@ -223,7 +256,7 @@ contract Wallegacy {
         // pattern Check Effect Interaction (CEI)
         // we also can use OpenZeppelin library
         testatorWill.status = WillStatus.DONE;
-        s_testatorToValueLocked[testatorAddress] = 0;
+        cancelNotary(msg.sender);
 
         // we compute the amount to send and we send it
         for (uint256 i = 0; i < testatorWill.heirs.length; i++) {
