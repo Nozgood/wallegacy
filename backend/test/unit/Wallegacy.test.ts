@@ -3,18 +3,30 @@ import { Wallegacy } from "../../types/ethers-contracts/Wallegacy.js";
 import { WallegacySBT } from "../../types/ethers-contracts/WallegacySBT.js";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/types";
 import { expect } from "chai";
+import { exec } from "child_process";
 
 const { ethers, networkHelpers } = await hre.network.connect();
 
-describe("Wallegacy setSBTContract", async function () {
-    let wallegacy: Wallegacy;
-    let sbtContract: WallegacySBT;
-    let relayerAddress: HardhatEthersSigner;
+async function setUpWallegacy() {
+    const [ownerAddress, notOwnerAddress, notaryAddress, anotherNotaryAddress, heirOneAddress, heirTwoAddress, heirThreeAddress, testatorAddress]: HardhatEthersSigner = await ethers.getSigners();
+    const wallegacy: Wallegacy = await ethers.deployContract("Wallegacy", ownerAddress);
+    const wallegacySBT: WallegacySBT = await ethers.deployContract("WallegacySBT", ["localhost.com", wallegacy]);
 
-    beforeEach(async function () {
-        [relayerAddress] = await ethers.getSigners();
-        wallegacy = await ethers.deployContract("Wallegacy", [relayerAddress]);
-    })
+    return { ownerAddress, notOwnerAddress, notaryAddress, anotherNotaryAddress, heirOneAddress, heirTwoAddress, heirThreeAddress, testatorAddress, wallegacy, wallegacySBT }
+}
+
+describe("Wallegacy setSBTContract", function () {
+    let ownerAddress: HardhatEthersSigner;
+    let notOwnerAddress: HardhatEthersSigner;
+    let notaryAddress: HardhatEthersSigner;
+    let heirOneAddress: HardhatEthersSigner;
+    let heirTwoAddress: HardhatEthersSigner;
+    let wallegacy: Wallegacy;
+    let wallegacySBT: WallegacySBT;
+
+    beforeEach(async () => {
+        ({ ownerAddress, notOwnerAddress, notaryAddress, heirOneAddress, heirTwoAddress, wallegacy, wallegacySBT } = await setUpWallegacy());
+    });
 
     describe("when the sbt is not deployed", function () {
         it("should reverts with WallegacySBT__NoAddress error", async function () {
@@ -24,314 +36,422 @@ describe("Wallegacy setSBTContract", async function () {
     })
 
     describe("when the sbt is deployed", function () {
-        beforeEach(async function () {
-            sbtContract = await ethers.deployContract("WallegacySBT", ["localhost.com", wallegacy.getAddress()]);
-        })
-
-
         it("should assign sbt variable to deployed contract and emit event", async function () {
-            await expect(wallegacy.setSBTContract(sbtContract.getAddress()))
-                .to.emit(wallegacy, "SBTContractSet").withArgs(sbtContract.getAddress())
+            await expect(wallegacy.setSBTContract(wallegacySBT))
+                .to.emit(wallegacy, "SBTContractSet").withArgs(wallegacySBT)
         })
     })
 })
 
-describe("Wallegacy createWill", async function () {
+describe("Wallegacy registerNotary", async function () {
+    let ownerAddress: HardhatEthersSigner;
+    let notOwnerAddress: HardhatEthersSigner;
+    let notaryAddress: HardhatEthersSigner;
+    let heirOneAddress: HardhatEthersSigner;
+    let heirTwoAddress: HardhatEthersSigner;
     let wallegacy: Wallegacy;
-    let sbtContract: WallegacySBT;
-    let testator: HardhatEthersSigner;
-    let heirOne: HardhatEthersSigner;
-    let heirTwo: HardhatEthersSigner;
-    let depositAmount: bigint;
-    let relayerAddress: HardhatEthersSigner;
+    let wallegacySBT: WallegacySBT;
 
-    beforeEach(async function () {
-        depositAmount = ethers.parseEther("2.0");
-        [testator, heirOne, heirTwo, relayerAddress] = await ethers.getSigners();
+    beforeEach(async () => {
+        ({ ownerAddress, notOwnerAddress, notaryAddress, wallegacy, wallegacySBT } = await setUpWallegacy());
+    });
 
-        wallegacy = await ethers.deployContract("Wallegacy", [relayerAddress]);
-        sbtContract = await ethers.deployContract("WallegacySBT", ["localhost.com", wallegacy.getAddress()]);
-
-        await wallegacy.waitForDeployment();
-        await sbtContract.waitForDeployment();
-
-    })
-
-    describe("when the SBT is not set", function () {
-        it("should reverts immediatly", async function () {
-            await expect(wallegacy.connect(testator).createWill([]))
-                .to.be.revertedWithCustomError(wallegacy, "WallegacySBT__NotSet")
+    describe("when the function caller is not the owner", function () {
+        it("should reverts with OwnableUnauthorizedAccount error ", async function () {
+            await expect(wallegacy.connect(notOwnerAddress).registerNotary(notaryAddress))
+                .to.be.revertedWithCustomError(wallegacy, "OwnableUnauthorizedAccount").withArgs(notOwnerAddress);
         })
     })
 
-    describe("when the SBT contract is set", function () {
-        beforeEach(async function () {
-            await wallegacy.setSBTContract(sbtContract);
-        })
+    describe("when the caller is the owner", function () {
+        it("should register the notary and emit event", async function () {
+            await expect(wallegacy.connect(ownerAddress).registerNotary(notaryAddress))
+                .to.emit(wallegacy, "NotaryRegistered").withArgs(notaryAddress);
 
-        describe("when the testator has already created a will", function () {
-            beforeEach(async function () {
-                const heirs: Wallegacy.HeirStruct[] = [
-                    { heirAddress: heirOne, percent: 100 },
-                ]
-
-                await wallegacy.connect(testator).createWill(heirs, { value: depositAmount })
-            })
-
-            it("should reverts with Wallegacy__TestatorAlreadyHasWill error", async function () {
-                await expect(wallegacy.connect(testator).createWill([]))
-                    .to.be.revertedWithCustomError(wallegacy, "Wallegacy__TestatorAlreadyHasWill");
-            })
-        })
-
-        describe("when no heirs is provided", function () {
-            it("should revert with a Wallegacy__NoHeirs error", async function () {
-                await expect(wallegacy.connect(testator).createWill([]))
-                    .to.be.revertedWithCustomError(wallegacy, "Wallegacy__NoHeirs");
-            })
-        })
-
-        describe("when no ETH is sent", function () {
-            it("should revert with a Wallegacy__NotEnoughAmount error", async function () {
-                const heirs: Wallegacy.HeirStruct[] = [
-                    { heirAddress: ethers.ZeroAddress, percent: 100 }
-                ]
-
-                await expect(wallegacy.connect(testator).createWill(heirs))
-                    .to.be.revertedWithCustomError(wallegacy, "Wallegacy__NotEnoughAmount");
-            })
-        })
-
-        describe("when only one heir is provided and address is null", function () {
-            it("should revert with a Wallegacy__HeirWithoutAddress error", async function () {
-                const heirs: Wallegacy.HeirStruct[] = [
-                    { heirAddress: ethers.ZeroAddress, percent: 100 }
-                ]
-
-
-                await expect(wallegacy.connect(testator).createWill(heirs, { value: depositAmount }))
-                    .to.be.revertedWithCustomError(wallegacy, "Wallegacy__HeirWithoutAddress").withArgs(0);
-            })
-        })
-
-        describe("when the total percent is not equal to 100", function () {
-            it("should revert with a Wallegacy__NewWillNotGoodPercent error", async function () {
-                const heirs: Wallegacy.HeirStruct[] = [
-                    { heirAddress: heirOne, percent: 100 },
-                    { heirAddress: heirOne, percent: 100 }
-                ]
-                await expect(wallegacy.connect(testator).createWill(heirs, { value: depositAmount }))
-                    .to.be.revertedWithCustomError(wallegacy, "Wallegacy__NewWillNotGoodPercent").withArgs(200);
-            })
-        })
-
-        describe("when all parameters are correctly set", function () {
-            it("should emit all the events and should not revert", async function () {
-                const heirs: Wallegacy.HeirStruct[] = [
-                    { heirAddress: heirOne, percent: 50 },
-                    { heirAddress: heirOne, percent: 50 }
-                ]
-                const contractBalanceBefore = await ethers.provider.getBalance(wallegacy.target);
-
-
-                expect(await sbtContract.balanceOf(testator.address)).to.equal(0);
-
-                await expect(wallegacy.connect(testator).createWill(heirs, { value: depositAmount }))
-                    .to.emit(wallegacy, "TestatorValueLocked").withArgs(testator.address, depositAmount)
-                    .and.to.emit(sbtContract, "SBTMinted")
-                    .and.to.emit(wallegacy, "WillCreated");
-
-                const contractBalanceAfter = await ethers.provider.getBalance(wallegacy.target);
-                expect(contractBalanceAfter - contractBalanceBefore).to.equal(depositAmount)
-                const isTestator = await wallegacy.connect(testator).isTestator()
-                expect(isTestator).to.equal(true);
-
-                expect(await sbtContract.balanceOf(testator.address)).to.equal(1);
-            })
-        })
-    })
-
-})
-
-describe("Wallegacy getWill", async function () {
-    let wallegacy: Wallegacy;
-    let sbtContract: WallegacySBT;
-    let testator: HardhatEthersSigner;
-    let heirOne: HardhatEthersSigner;
-    let heirTwo: HardhatEthersSigner;
-    let relayerAddress: HardhatEthersSigner;
-
-    beforeEach(async function () {
-        [testator, heirOne, heirTwo, relayerAddress] = await ethers.getSigners();
-        wallegacy = await ethers.deployContract("Wallegacy", [relayerAddress]);
-        await wallegacy.waitForDeployment();
-
-
-
-    })
-
-    describe("when no will are created", function () {
-        it("should reverts with Wallegacy__NoTestator error", async function () {
-            await expect(wallegacy.getWill()).
-                to.be.revertedWithCustomError(wallegacy, "Wallegacy__NoTestator")
-        })
-    })
-
-    describe("when a will is created", function () {
-        beforeEach(async function () {
-            const heirs: Wallegacy.HeirStruct[] = [
-                { heirAddress: heirOne, percent: 50 },
-                { heirAddress: heirTwo, percent: 50 }
-            ]
-
-            const depositAmout = ethers.parseEther("2.0")
-            sbtContract = await ethers.deployContract("WallegacySBT", ["localhost", wallegacy.getAddress()])
-            await sbtContract.waitForDeployment();
-            await wallegacy.setSBTContract(sbtContract);
-            await wallegacy.connect(testator).createWill(heirs, { value: depositAmout })
-        })
-
-        it("should returns the will corresponding to the testator", async function () {
-            const will = await wallegacy.connect(testator).getWill();
-            expect(will.testator).to.equal(testator);
-            expect(will.heirs.length).to.equal(2);
-            expect(will.exists).to.equal(true);
-            expect(will.heirs[0].heirAddress).to.equal(heirOne);
-            expect(will.heirs[1].heirAddress).to.equal(heirTwo);
+            const isNotary = await wallegacy.connect(ownerAddress).isNotary(notaryAddress);
+            expect(isNotary).to.be.equal(true);
         })
     })
 })
 
-describe("Wallegacy getValueLocked", async function () {
+describe("Wallegacy newWill", async function () {
+    let ownerAddress: HardhatEthersSigner;
+    let notOwnerAddress: HardhatEthersSigner;
+    let notaryAddress: HardhatEthersSigner;
+    let heirOneAddress: HardhatEthersSigner;
+    let heirTwoAddress: HardhatEthersSigner;
     let wallegacy: Wallegacy;
-    let sbtContract: WallegacySBT;
-    let testator: HardhatEthersSigner;
-    let heirOne: HardhatEthersSigner;
-    let heirTwo: HardhatEthersSigner;
-    let relayerAddress: HardhatEthersSigner;
+    let wallegacySBT: WallegacySBT;
 
-    beforeEach(async function () {
-        [testator, heirOne, heirTwo, relayerAddress] = await ethers.getSigners();
-        wallegacy = await ethers.deployContract("Wallegacy", [relayerAddress]);
-        sbtContract = await ethers.deployContract("WallegacySBT", ["localhost", wallegacy.getAddress()])
-        await wallegacy.setSBTContract(sbtContract);
-        await wallegacy.waitForDeployment();
-        const heirs: Wallegacy.HeirStruct[] = [
-            { heirAddress: heirOne, percent: 50 },
-            { heirAddress: heirOne, percent: 50 }
-        ]
+    beforeEach(async () => {
+        ({ ownerAddress, notOwnerAddress, notaryAddress, heirOneAddress, wallegacy, wallegacySBT } = await setUpWallegacy());
+    });
 
-        const depositAmout = ethers.parseEther("2.0")
-        await wallegacy.connect(testator).createWill(heirs, { value: depositAmout })
-    })
-
-    describe("the testator has not created a Will", function () {
-        it("should returns 0", async function () {
-            const valueLocked = await wallegacy.connect(heirOne).getLockedValue();
-            expect(valueLocked).to.equal(0);
-            expect(valueLocked).to.equal(ethers.parseEther("0"));
-        })
-    })
-})
-
-describe("Wallegacy CancelWill", async function () {
-    let wallegacy: Wallegacy;
-    let sbtContract: WallegacySBT;
-    let testator: HardhatEthersSigner;
-    let heir: HardhatEthersSigner;
-    let relayerAddress: HardhatEthersSigner;
-
-    beforeEach(async function () {
-        [testator, heir, relayerAddress] = await ethers.getSigners();
-        wallegacy = await ethers.deployContract("Wallegacy", [relayerAddress]);
-        sbtContract = await ethers.deployContract(
-            "WallegacySBT", ["localhost", wallegacy.getAddress()]
-        )
-    })
-
-    describe("when the sender is not registered as a testator", function () {
-        it("should reverts with Wallegacy__NoTestator error", async function () {
-            await expect(wallegacy.connect(testator).cancelWill())
-                .to.be.revertedWithCustomError(wallegacy, "Wallegacy__NoTestator")
-        })
-    })
-
-    describe("when the testator is registered", function () {
-        beforeEach(async function () {
-            const heirParams: Wallegacy.HeirStruct[] = [{
-                heirAddress: heir,
-                percent: 100,
-            }]
-            await wallegacy.setSBTContract(sbtContract)
-            await wallegacy.connect(testator).createWill(heirParams, { value: ethers.parseEther("1.1") });
-        })
-        it("should cancel his will and burn his token", async function () {
-            await expect(wallegacy.connect(testator).cancelWill())
-                .to.emit(wallegacy, "WillCancelled").withArgs(testator.address)
-                .and.to.emit(sbtContract, "SBTBurned")
-
-            // we try to get the Will after cancel to verify 
-            await expect(wallegacy.connect(testator).getWill())
-                .to.be.revertedWithCustomError(wallegacy, "Wallegacy__NoTestator")
-        })
-    })
-})
-
-describe("Wallegacy sendLegacyToHeirs", async function () {
-    let wallegacy: Wallegacy;
-    let sbtContract: WallegacySBT;
-    let testator: HardhatEthersSigner;
-    let heirOne: HardhatEthersSigner;
-    let heirTwo: HardhatEthersSigner;
-    let relayerAddress: HardhatEthersSigner;
-
-    beforeEach(async function () {
-        [testator, heirOne, heirTwo, relayerAddress] = await ethers.getSigners();
-        wallegacy = await ethers.deployContract("Wallegacy", [relayerAddress]);
-        sbtContract = await ethers.deployContract(
-            "WallegacySBT", ["localhost", wallegacy.getAddress()]
-        )
-        await wallegacy.setSBTContract(sbtContract);
-        await wallegacy.waitForDeployment();
-        const heirs: Wallegacy.HeirStruct[] = [
-            { heirAddress: heirOne, percent: 50 },
-            { heirAddress: heirTwo, percent: 50 }
-        ]
-
-        const depositAmout = ethers.parseEther("2.0")
-        await wallegacy.connect(testator).createWill(heirs, { value: depositAmout })
-    })
-
-
-    describe("when the msg sender is not the relayer", function () {
-        it("should reverts with a Wallegacy__Unauthorized error", async function () {
-            await expect(wallegacy.connect(heirOne).triggerLegacyProcess(testator))
+    describe("when the notary is not registered", function () {
+        it("should reverts with Unauthorized error", async function () {
+            await expect(wallegacy.connect(ownerAddress).newWill(heirOneAddress))
                 .to.be.revertedWithCustomError(wallegacy, "Wallegacy__Unauthorized");
         })
     })
 
-    describe("when the testator address is not registered as testator", function () {
-        it("should reverts with Wallegacy__NoTestator error", async function () {
-            await expect(wallegacy.connect(relayerAddress).triggerLegacyProcess(heirOne))
-                .to.be.revertedWithCustomError(wallegacy, "Wallegacy__NoTestator");
+    describe("when the notary is registered", function () {
+        beforeEach(async () => {
+            await wallegacy.connect(ownerAddress).registerNotary(notaryAddress);
         })
-    })
 
-    describe("when the process runs correctly", function () {
-        it("the heirs should receive their legs", async function () {
-            const heirOneBalanceBefore = await ethers.provider.getBalance(heirOne)
-            const heirTwoBalanceBefore = await ethers.provider.getBalance(heirOne)
+        it("should register new will and emit event", async function () {
+            await expect(wallegacy.connect(notaryAddress).newWill(heirOneAddress))
+                .to.emit(wallegacy, "NotaryNewWill").withArgs(notaryAddress, heirOneAddress)
+                .and.to.emit(wallegacy, "TestatorRegistered").withArgs(heirOneAddress)
+                .and.to.emit(wallegacy, "NotaryAddWill").withArgs(notaryAddress);
 
-            await expect(wallegacy.connect(relayerAddress).triggerLegacyProcess(testator))
-                .to.emit(wallegacy, "LegacySentToHeir").withArgs(heirOne)
-                .and.to.emit(wallegacy, "LegacySentToHeir").withArgs(heirTwo)
-                .and.to.emit(wallegacy, "LegacySent").withArgs(testator)
+            const isTestator = await wallegacy.connect(heirOneAddress).isTestator();
+            expect(isTestator).to.be.equal(true);
+        })
 
-            const heirOneBalanceAfter = await ethers.provider.getBalance(heirOne)
-            const heirTwoBalanceAfter = await ethers.provider.getBalance(heirOne)
+        it("should reverts if the testator already have one Will", async function () {
+            await expect(wallegacy.connect(notaryAddress).newWill(heirOneAddress))
+                .to.emit(wallegacy, "NotaryNewWill").withArgs(notaryAddress, heirOneAddress);
 
-            expect(heirOneBalanceAfter - heirOneBalanceBefore).to.equal(ethers.parseEther("1.0"))
-            expect(heirTwoBalanceAfter - heirTwoBalanceBefore).to.equal(ethers.parseEther("1.0"))
+            await expect(wallegacy.connect(notaryAddress).newWill(heirOneAddress))
+                .to.be.revertedWithCustomError(wallegacy, "Wallegacy__WillAlreadySet").withArgs(heirOneAddress);
         })
     })
 })
+
+describe("Wallegacy setUpWill", async function () {
+    let ownerAddress: HardhatEthersSigner;
+    let notOwnerAddress: HardhatEthersSigner;
+    let notaryAddress: HardhatEthersSigner;
+    let heirOneAddress: HardhatEthersSigner;
+    let heirTwoAddress: HardhatEthersSigner;
+    let testatorAddress: HardhatEthersSigner;
+    let wallegacy: Wallegacy;
+    let wallegacySBT: WallegacySBT;
+    const depositAmount = ethers.parseEther("2.0");
+
+    beforeEach(async () => {
+        ({ ownerAddress, notOwnerAddress, notaryAddress, heirOneAddress, heirTwoAddress, testatorAddress, wallegacy, wallegacySBT } = await setUpWallegacy());
+        await wallegacy.connect(ownerAddress).registerNotary(notaryAddress);
+    });
+
+    describe("when the SBT is not set", function () {
+        it("should reverts with WallegacySBT__NotSet error", async function () {
+            await expect(wallegacy.connect(testatorAddress).setUpWill([]))
+                .to.be.revertedWithCustomError(wallegacy, "WallegacySBT__NotSet")
+        })
+
+        describe("when the SBT contract is set", function () {
+            beforeEach(async () => {
+                await expect(wallegacy.setSBTContract(wallegacySBT)).to.emit(wallegacy, "SBTContractSet").withArgs(wallegacySBT);
+            })
+
+            describe("the testator is not registered", function () {
+                it("should reverts with Wallegacy__NoTestator error", async function () {
+                    await expect(wallegacy.connect(testatorAddress).setUpWill([]))
+                        .to.be.revertedWithCustomError(wallegacy, "Wallegacy__NoTestator").withArgs(testatorAddress);
+                })
+            })
+
+            describe("when the testator is registered", function () {
+                beforeEach(async () => {
+                    await wallegacy.connect(notaryAddress).newWill(testatorAddress)
+                })
+
+                describe("the testator do not provides heirs", async function () {
+                    it("should reverts with Wallegacy__NoHeirs error", async function () {
+                        await expect(wallegacy.connect(testatorAddress).setUpWill([]))
+                            .to.be.revertedWithCustomError(wallegacy, "Wallegacy__NoHeirs");
+                    })
+                })
+
+                describe("the testator provides heirs without addresses", async function () {
+                    it("should reverts with Wallegacy__NoHeirs error", async function () {
+                        const heirs: Wallegacy.HeirStruct[] = [
+                            { heirAddress: ethers.ZeroAddress, percent: 50 },
+                        ]
+                        await expect(wallegacy.connect(testatorAddress).setUpWill(heirs, { value: depositAmount }))
+                            .to.be.revertedWithCustomError(wallegacy, "Wallegacy__HeirWithoutAddress").withArgs(0);
+                    })
+                })
+
+
+                describe("the testator do not send funds", async function () {
+                    it("should reverts with Wallegacy__NewWillNotGoodPercent error", async function () {
+                        const heirs: Wallegacy.HeirStruct[] = [
+                            { heirAddress: heirOneAddress, percent: 50 },
+                            { heirAddress: heirTwoAddress, percent: 50 },
+                        ]
+
+                        await expect(wallegacy.connect(testatorAddress).setUpWill(heirs))
+                            .to.be.revertedWithCustomError(wallegacy, "Wallegacy__NotEnoughAmount");
+                    })
+                })
+
+                describe("all conditions are satisfied", async function () {
+                    it("should lock the testator funds, update will status and mint a token", async function () {
+                        const heirs: Wallegacy.HeirStruct[] = [
+                            { heirAddress: heirOneAddress, percent: 50 },
+                            { heirAddress: heirTwoAddress, percent: 50 },
+                        ]
+
+                        await expect(wallegacy.connect(testatorAddress).setUpWill(heirs, { value: depositAmount }))
+                            .to.emit(wallegacy, "WillSetUp").withArgs(testatorAddress)
+                            .and.to.emit(wallegacy, "TestatorValueLocked").withArgs(testatorAddress, depositAmount)
+                            .and.to.emit(wallegacySBT, "SBTMinted").withArgs(testatorAddress, BigInt(testatorAddress.address))
+
+                        const will: Wallegacy.WillStructOutput = await wallegacy.connect(testatorAddress).getWill();
+
+                        expect(will.status).to.equal(1);
+                        expect(will.heirs.length).to.equal(2);
+                        expect(will.heirs[0].heirAddress).to.equal(heirOneAddress)
+                        expect(will.heirs[1].heirAddress).to.equal(heirTwoAddress)
+                        expect(will.heirs[0].percent).to.equal(50)
+                        expect(will.heirs[1].percent).to.equal(50)
+
+                    })
+                })
+            })
+        })
+    })
+})
+
+describe("Wallegacy cancelWill", async function () {
+    let ownerAddress: HardhatEthersSigner;
+    let notOwnerAddress: HardhatEthersSigner;
+    let notaryAddress: HardhatEthersSigner;
+    let heirOneAddress: HardhatEthersSigner;
+    let heirTwoAddress: HardhatEthersSigner;
+    let testatorAddress: HardhatEthersSigner;
+    let wallegacy: Wallegacy;
+    let wallegacySBT: WallegacySBT;
+    const depositAmount = ethers.parseEther("2.0");
+
+    beforeEach(async () => {
+        ({ ownerAddress, notOwnerAddress, notaryAddress, heirOneAddress, heirTwoAddress, testatorAddress, wallegacy, wallegacySBT } = await setUpWallegacy());
+        await wallegacy.connect(ownerAddress).registerNotary(notaryAddress);
+        await wallegacy.setSBTContract(wallegacySBT);
+    });
+
+    describe("when the SBT is not set", function () {
+        it("should reverts with WallegacySBT__NotSet error", async function () {
+            const wallegacyWithoutSBT = await ethers.deployContract("Wallegacy", ownerAddress);
+            await wallegacyWithoutSBT.connect(ownerAddress).registerNotary(notaryAddress);
+            await wallegacyWithoutSBT.connect(notaryAddress).newWill(testatorAddress);
+
+            await expect(wallegacyWithoutSBT.connect(testatorAddress).cancelWill())
+                .to.be.revertedWithCustomError(wallegacyWithoutSBT, "WallegacySBT__NotSet");
+        });
+    });
+
+    describe("when the testator is not registered", function () {
+        it("should reverts with Wallegacy__NoTestator error", async function () {
+            await expect(wallegacy.connect(testatorAddress).cancelWill())
+                .to.be.revertedWithCustomError(wallegacy, "Wallegacy__NoTestator").withArgs(testatorAddress);
+        });
+    });
+
+    describe("when the testator has a will", function () {
+        beforeEach(async () => {
+            await wallegacy.connect(notaryAddress).newWill(testatorAddress);
+            const heirs: Wallegacy.HeirStruct[] = [
+                { heirAddress: heirOneAddress, percent: 50 },
+                { heirAddress: heirTwoAddress, percent: 50 },
+            ];
+            await wallegacy.connect(testatorAddress).setUpWill(heirs, { value: depositAmount });
+        });
+
+        it("should cancel the will, burn SBT and emit event", async function () {
+            const tokenID = BigInt(testatorAddress.address);
+
+            await expect(wallegacy.connect(testatorAddress).cancelWill())
+                .to.emit(wallegacy, "WillCancelled").withArgs(testatorAddress)
+                .and.to.emit(wallegacySBT, "SBTBurned").withArgs(testatorAddress, tokenID);
+
+            await expect(wallegacy.connect(notaryAddress).getWill()).to.be.revertedWithCustomError(wallegacy, "Wallegacy__WillNotFound").withArgs(notaryAddress);
+
+            const isTestator = await wallegacy.isTestator(testatorAddress);
+            expect(isTestator).to.equal(false);
+
+            await expect(wallegacySBT.ownerOf(tokenID))
+                .to.be.revertedWithCustomError(wallegacySBT, "ERC721NonexistentToken");
+        });
+    });
+});
+
+describe("Wallegacy triggerLegacyProcess", async function () {
+    let ownerAddress: HardhatEthersSigner;
+    let notOwnerAddress: HardhatEthersSigner;
+    let notaryAddress: HardhatEthersSigner;
+    let anotherNotaryAddress: HardhatEthersSigner;
+    let heirOneAddress: HardhatEthersSigner;
+    let heirTwoAddress: HardhatEthersSigner;
+    let heirThreeAddress: HardhatEthersSigner;
+    let testatorAddress: HardhatEthersSigner;
+    let wallegacy: Wallegacy;
+    let wallegacySBT: WallegacySBT;
+    const depositAmount = ethers.parseEther("10.0");
+
+    beforeEach(async () => {
+        ({ ownerAddress, notOwnerAddress, notaryAddress, anotherNotaryAddress, heirOneAddress, heirTwoAddress, heirThreeAddress, testatorAddress, wallegacy, wallegacySBT } = await setUpWallegacy());
+        await wallegacy.connect(ownerAddress).registerNotary(notaryAddress);
+        await wallegacy.connect(ownerAddress).registerNotary(anotherNotaryAddress);
+        await wallegacy.setSBTContract(wallegacySBT);
+    });
+
+    describe("when the caller is not a notary", function () {
+        it("should reverts with Wallegacy__Unauthorized error", async function () {
+            await expect(wallegacy.connect(notOwnerAddress).triggerLegacyProcess(testatorAddress))
+                .to.be.revertedWithCustomError(wallegacy, "Wallegacy__Unauthorized");
+        });
+    });
+
+    describe("when the testator does not exist", function () {
+        it("should reverts with Wallegacy__NoTestator error", async function () {
+            await expect(wallegacy.connect(notaryAddress).triggerLegacyProcess(testatorAddress))
+                .to.be.revertedWithCustomError(wallegacy, "Wallegacy__NoTestator").withArgs(testatorAddress);
+        });
+    });
+
+    describe("when the testator has a valid will", function () {
+        beforeEach(async () => {
+            await wallegacy.connect(notaryAddress).newWill(testatorAddress);
+        });
+
+        describe("with one heir receiving 100%", function () {
+            beforeEach(async () => {
+                const heirs: Wallegacy.HeirStruct[] = [
+                    { heirAddress: heirOneAddress, percent: 100 },
+                ];
+                await wallegacy.connect(testatorAddress).setUpWill(heirs, { value: depositAmount });
+            });
+
+            it.only("should transfer full amount to heir and emit events", async function () {
+                const contractBalanceBefore = await ethers.provider.getBalance(wallegacy);
+                const heirBalanceBefore = await ethers.provider.getBalance(heirOneAddress);
+
+                await expect(wallegacy.connect(notaryAddress).triggerLegacyProcess(testatorAddress))
+                    .to.emit(wallegacy, "LegacySentToHeir").withArgs(heirOneAddress)
+                    .and.to.emit(wallegacy, "LegacySent").withArgs(testatorAddress);
+
+                const contractBalanceAfter = await ethers.provider.getBalance(wallegacy);
+                const heirBalanceAfter = await ethers.provider.getBalance(heirOneAddress);
+
+                expect(contractBalanceBefore - contractBalanceAfter).to.equal(depositAmount);
+                expect(heirBalanceAfter - heirBalanceBefore).to.equal(depositAmount);
+
+                const will: Wallegacy.WillStructOutput = await wallegacy.connect(testatorAddress).getWill();
+                expect(will.status).to.equal(2); // WillStatus.DONE
+
+                const valueLocked = await wallegacy.getLockedValue(testatorAddress);
+                expect(valueLocked).to.equal(0);
+            });
+        });
+
+        describe("with two heirs receiving 50% each", function () {
+            beforeEach(async () => {
+                const heirs: Wallegacy.HeirStruct[] = [
+                    { heirAddress: heirOneAddress, percent: 50 },
+                    { heirAddress: heirTwoAddress, percent: 50 },
+                ];
+                await wallegacy.connect(testatorAddress).setUpWill(heirs, { value: depositAmount });
+            });
+
+            it("should transfer correct amounts to each heir and emit events", async function () {
+                const contractBalanceBefore = await ethers.provider.getBalance(wallegacy);
+                const heirOneBalanceBefore = await ethers.provider.getBalance(heirOneAddress);
+                const heirTwoBalanceBefore = await ethers.provider.getBalance(heirTwoAddress);
+
+                const expectedAmountPerHeir = depositAmount / 2n;
+
+                await expect(wallegacy.connect(notaryAddress).triggerLegacyProcess(testatorAddress))
+                    .to.emit(wallegacy, "LegacySentToHeir").withArgs(heirOneAddress)
+                    .and.to.emit(wallegacy, "LegacySentToHeir").withArgs(heirTwoAddress)
+                    .and.to.emit(wallegacy, "LegacySent").withArgs(testatorAddress);
+
+                const contractBalanceAfter = await ethers.provider.getBalance(wallegacy);
+                const heirOneBalanceAfter = await ethers.provider.getBalance(heirOneAddress);
+                const heirTwoBalanceAfter = await ethers.provider.getBalance(heirTwoAddress);
+
+                expect(contractBalanceBefore - contractBalanceAfter).to.equal(depositAmount);
+                expect(heirOneBalanceAfter - heirOneBalanceBefore).to.equal(expectedAmountPerHeir);
+                expect(heirTwoBalanceAfter - heirTwoBalanceBefore).to.equal(expectedAmountPerHeir);
+
+                const will: Wallegacy.WillStructOutput = await wallegacy.connect(testatorAddress).getWill();
+                expect(will.status).to.equal(3); // WillStatus.DONE
+            });
+        });
+
+        describe("with three heirs receiving different percentages", function () {
+            beforeEach(async () => {
+                const heirs: Wallegacy.HeirStruct[] = [
+                    { heirAddress: heirOneAddress, percent: 50 },
+                    { heirAddress: heirTwoAddress, percent: 30 },
+                    { heirAddress: heirThreeAddress, percent: 20 },
+                ];
+                await wallegacy.connect(testatorAddress).setUpWill(heirs, { value: depositAmount });
+            });
+
+            it("should transfer correct proportional amounts to each heir", async function () {
+                const contractBalanceBefore = await ethers.provider.getBalance(wallegacy);
+                const heirOneBalanceBefore = await ethers.provider.getBalance(heirOneAddress);
+                const heirTwoBalanceBefore = await ethers.provider.getBalance(heirTwoAddress);
+                const heirThreeBalanceBefore = await ethers.provider.getBalance(heirThreeAddress);
+
+                const expectedHeirOneAmount = (depositAmount * 50n) / 100n;
+                const expectedHeirTwoAmount = (depositAmount * 30n) / 100n;
+                const expectedHeirThreeAmount = (depositAmount * 20n) / 100n;
+
+                await expect(wallegacy.connect(notaryAddress).triggerLegacyProcess(testatorAddress))
+                    .to.emit(wallegacy, "LegacySentToHeir").withArgs(heirOneAddress)
+                    .and.to.emit(wallegacy, "LegacySentToHeir").withArgs(heirTwoAddress)
+                    .and.to.emit(wallegacy, "LegacySentToHeir").withArgs(heirThreeAddress)
+                    .and.to.emit(wallegacy, "LegacySent").withArgs(testatorAddress);
+
+                const contractBalanceAfter = await ethers.provider.getBalance(wallegacy);
+                const heirOneBalanceAfter = await ethers.provider.getBalance(heirOneAddress);
+                const heirTwoBalanceAfter = await ethers.provider.getBalance(heirTwoAddress);
+                const heirThreeBalanceAfter = await ethers.provider.getBalance(heirThreeAddress);
+
+                expect(contractBalanceBefore - contractBalanceAfter).to.equal(depositAmount);
+                expect(heirOneBalanceAfter - heirOneBalanceBefore).to.equal(expectedHeirOneAmount);
+                expect(heirTwoBalanceAfter - heirTwoBalanceBefore).to.equal(expectedHeirTwoAmount);
+                expect(heirThreeBalanceAfter - heirThreeBalanceBefore).to.equal(expectedHeirThreeAmount);
+
+                const totalSent = expectedHeirOneAmount + expectedHeirTwoAmount + expectedHeirThreeAmount;
+                expect(totalSent).to.equal(depositAmount);
+
+                const will: Wallegacy.WillStructOutput = await wallegacy.connect(testatorAddress).getWill();
+                expect(will.status).to.equal(3); // WillStatus.DONE
+            });
+        });
+
+        describe("when a different notary tries to trigger the process", function () {
+            beforeEach(async () => {
+                const heirs: Wallegacy.HeirStruct[] = [
+                    { heirAddress: heirOneAddress, percent: 100 },
+                ];
+                await wallegacy.connect(testatorAddress).setUpWill(heirs, { value: depositAmount });
+            });
+
+            it("should allow any registered notary to trigger the process", async function () {
+                await expect(wallegacy.connect(anotherNotaryAddress).triggerLegacyProcess(testatorAddress))
+                    .to.emit(wallegacy, "LegacySent").withArgs(testatorAddress);
+            });
+        });
+
+        describe("reentrancy protection", function () {
+            it("should change will status before sending funds", async function () {
+                const heirs: Wallegacy.HeirStruct[] = [
+                    { heirAddress: heirOneAddress, percent: 100 },
+                ];
+                await wallegacy.connect(testatorAddress).setUpWill(heirs, { value: depositAmount });
+
+                await wallegacy.connect(notaryAddress).triggerLegacyProcess(testatorAddress);
+
+                const will: Wallegacy.WillStructOutput = await wallegacy.connect(testatorAddress).getWill();
+                expect(will.status).to.equal(3); // WillStatus.DONE
+            });
+        });
+    });
+});

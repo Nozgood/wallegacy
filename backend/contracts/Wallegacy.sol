@@ -103,8 +103,8 @@ contract Wallegacy is Ownable {
         _;
     }
 
-    modifier onlyTestator() {
-        if (!s_testators[msg.sender]) {
+    modifier onlyTestatorOrNotary() {
+        if (!s_testators[msg.sender] && !isNotary(msg.sender)) {
             revert Wallegacy__NoTestator(msg.sender);
         }
         _;
@@ -117,7 +117,7 @@ contract Wallegacy is Ownable {
         _;
     }
 
-    function getWill() public view onlyTestator returns (Will memory) {
+    function getWill() public view onlyTestatorOrNotary returns (Will memory) {
         Will memory will = s_testatorToWill[msg.sender];
 
         if (!will.exists) {
@@ -127,8 +127,10 @@ contract Wallegacy is Ownable {
         return will;
     }
 
-    function getLockedValue() public view returns (uint256) {
-        return s_testatorToValueLocked[msg.sender];
+    function getLockedValue(
+        address testatorAddress
+    ) public view returns (uint256) {
+        return s_testatorToValueLocked[testatorAddress];
     }
 
     function isNotary(address notaryAddress) public view returns (bool) {
@@ -176,7 +178,7 @@ contract Wallegacy is Ownable {
     }
 
     /// todo: add a check if Will exists here to allow people to fund the contract ?
-    function lockTestatorFunds() public payable onlyTestator {
+    function lockTestatorFunds() public payable onlyTestatorOrNotary {
         // revert with custom errors is more gas efficient than require
         if (msg.value <= 0) {
             revert Wallegacy__NotEnoughAmount();
@@ -214,7 +216,7 @@ contract Wallegacy is Ownable {
     /// TODO: add a check if the user has set multiple heirs with the same address ?
     function setUpWill(
         Heir[] memory heirsParams
-    ) public payable onlyWithSBTContractSet onlyTestator {
+    ) public payable onlyWithSBTContractSet onlyTestatorOrNotary {
         if (heirsParams.length == 0) {
             revert Wallegacy__NoHeirs();
         }
@@ -223,7 +225,7 @@ contract Wallegacy is Ownable {
             revert Wallegacy__NotEnoughAmount();
         }
 
-        Will memory testatorWill = s_testatorToWill[msg.sender];
+        Will storage testatorWill = s_testatorToWill[msg.sender];
         if (!testatorWill.exists) {
             revert Wallegacy__TestatorWithoutWill(msg.sender);
         }
@@ -254,7 +256,7 @@ contract Wallegacy is Ownable {
         emit WillSetUp(msg.sender);
     }
 
-    function cancelWill() public onlyTestator onlyWithSBTContractSet {
+    function cancelWill() public onlyTestatorOrNotary onlyWithSBTContractSet {
         delete s_testatorToWill[msg.sender].heirs;
         s_testatorToWill[msg.sender].exists = false;
         s_testatorToWill[msg.sender].status = WillStatus.CANCELLED;
@@ -283,6 +285,7 @@ contract Wallegacy is Ownable {
         // pattern Check Effect Interaction (CEI)
         // we also can use OpenZeppelin library to setup a Guard (double check)
         testatorWill.status = WillStatus.DONE;
+        s_testatorToValueLocked[testatorAddress] = 0;
         removeWillToNotary(testatorWill.notary);
 
         // we compute the amount to send and we send it
