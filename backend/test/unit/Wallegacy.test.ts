@@ -326,7 +326,7 @@ describe("Wallegacy triggerLegacyProcess", async function () {
                 await wallegacy.connect(testatorAddress).setUpWill(heirs, { value: depositAmount });
             });
 
-            it.only("should transfer full amount to heir and emit events", async function () {
+            it("should transfer full amount to heir and emit events", async function () {
                 const contractBalanceBefore = await ethers.provider.getBalance(wallegacy);
                 const heirBalanceBefore = await ethers.provider.getBalance(heirOneAddress);
 
@@ -378,7 +378,7 @@ describe("Wallegacy triggerLegacyProcess", async function () {
                 expect(heirTwoBalanceAfter - heirTwoBalanceBefore).to.equal(expectedAmountPerHeir);
 
                 const will: Wallegacy.WillStructOutput = await wallegacy.connect(testatorAddress).getWill();
-                expect(will.status).to.equal(3); // WillStatus.DONE
+                expect(will.status).to.equal(2); // WillStatus.DONE
             });
         });
 
@@ -422,7 +422,7 @@ describe("Wallegacy triggerLegacyProcess", async function () {
                 expect(totalSent).to.equal(depositAmount);
 
                 const will: Wallegacy.WillStructOutput = await wallegacy.connect(testatorAddress).getWill();
-                expect(will.status).to.equal(3); // WillStatus.DONE
+                expect(will.status).to.equal(2); // WillStatus.DONE
             });
         });
 
@@ -450,7 +450,7 @@ describe("Wallegacy triggerLegacyProcess", async function () {
                 await wallegacy.connect(notaryAddress).triggerLegacyProcess(testatorAddress);
 
                 const will: Wallegacy.WillStructOutput = await wallegacy.connect(testatorAddress).getWill();
-                expect(will.status).to.equal(3); // WillStatus.DONE
+                expect(will.status).to.equal(2); // WillStatus.DONE
             });
         });
     });
