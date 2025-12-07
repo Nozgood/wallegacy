@@ -11,7 +11,7 @@ export default function Home() {
       <h1 className="text-3xl font-semibold">Welcome</h1>
 
       <button
-        onClick={() => router.push("/notary/login")}
+        onClick={() => router.push("/notary")}
         className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
       >
         Notaire
@@ -21,8 +21,14 @@ export default function Home() {
         onClick={() => router.push("/testator")}
         className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
       >
-        {/* redirects to client login */}
         Testateur
+      </button>
+
+      <button
+        onClick={() => router.push("/admin")}
+        className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+      >
+        Admin
       </button>
     </div>
   );
