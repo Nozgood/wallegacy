@@ -1,24 +1,24 @@
-// hooks/contracts/useRegisterNotary.ts
+// hooks/contracts/useNewWill.ts
 import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { WALLEGACY_CONTRACT } from "../../lib/contracts/config";
 
-export function useRegisterNotary() {
+export function useNewWill() {
     const { writeContract, data: hash, isPending, isError, error } = useWriteContract();
 
     const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
         hash,
     });
 
-    const register = (notaryAddress: `0x${string}`) => {
+    const createWill = (testatorAddress: `0x${string}`) => {
         writeContract({
             ...WALLEGACY_CONTRACT,
-            functionName: "registerNotary",
-            args: [notaryAddress],
+            functionName: "newWill",
+            args: [testatorAddress],
         });
     };
 
     return {
-        register,
+        createWill,
         isPending,
         isConfirming,
         isConfirmed,

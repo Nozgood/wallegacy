@@ -47,6 +47,7 @@ contract Wallegacy is Ownable {
     //    address private immutable i_relayerAddress;
 
     mapping(address => Will) private s_testatorToWill;
+    mapping(address => address[]) private s_notaryToTestators;
     mapping(address => uint256) private s_testatorToValueLocked;
     mapping(address => bool) private s_testators;
     mapping(address => uint256) private s_notaryToNumberOfWill;
@@ -125,6 +126,17 @@ contract Wallegacy is Ownable {
         }
 
         return will;
+    }
+
+    function getNotaryWills() public view onlyNotary returns (Will[] memory) {
+        address[] memory testators = s_notaryToTestators[msg.sender];
+        Will[] memory wills = new Will[](testators.length);
+
+        for (uint256 i = 0; i < testators.length; i++) {
+            wills[i] = s_testatorToWill[testators[i]];
+        }
+
+        return wills;
     }
 
     function getLockedValue(
@@ -209,6 +221,8 @@ contract Wallegacy is Ownable {
 
         registerTestator(testatorAddress);
         addWillToNotary();
+
+        s_notaryToTestators[msg.sender].push(testatorAddress);
 
         emit NotaryNewWill(msg.sender, testatorAddress);
     }

@@ -6,9 +6,11 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useRegisterNotary } from "../../../hooks/contracts/useRegisterNotary";
 import { useIsNotary } from "../../../hooks/contracts/useIsNotary";
 import { useState } from "react";
+import { useIsOwner } from "../../../hooks/contracts/useIsOwner";
 
 export default function AdminPage() {
     const { isConnected } = useAccount();
+    const { isOwner, isLoading: isCheckingOwner } = useIsOwner();
     const { register, isPending, isConfirming, isConfirmed, isError, error } = useRegisterNotary();
     const [notaryAddress, setNotaryAddress] = useState<string>("");
     const [checkAddress, setCheckAddress] = useState<string>("");
@@ -36,6 +38,38 @@ export default function AdminPage() {
                 <div className="flex flex-col gap-4 items-center">
                     <p className="text-gray-600">Connectez votre portefeuille pour continuer</p>
                     <ConnectButton />
+                </div>
+            </div>
+        );
+    }
+
+    if (isCheckingOwner) {
+        return (
+            <div className="min-h-screen bg-gray-100">
+                <div className="flex justify-end p-6">
+                    <ConnectButton />
+                </div>
+                <div className="flex flex-col items-center justify-center gap-6 p-6">
+                    <h1 className="text-3xl font-semibold">Espace Admin</h1>
+                    <p className="text-gray-600">Vérification en cours...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (!isOwner) {
+        return (
+            <div className="min-h-screen bg-gray-100">
+                <div className="flex justify-end p-6">
+                    <ConnectButton />
+                </div>
+                <div className="flex flex-col items-center justify-center gap-6 p-6">
+                    <h1 className="text-3xl font-semibold">Espace Admin</h1>
+                    <div className="flex flex-col gap-4 items-center">
+                        <p className="text-red-600 font-semibold">✗ Accès refusé</p>
+                        <p className="text-gray-600">Vous n'êtes pas autorisé à accéder à cet espace.</p>
+                        <p className="text-gray-600 text-sm">Seul le propriétaire du contrat peut accéder à cette page.</p>
+                    </div>
                 </div>
             </div>
         );

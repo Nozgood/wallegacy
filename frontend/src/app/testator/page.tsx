@@ -4,7 +4,7 @@ import TestatorHeader from "@/components/TestatorHeader";
 import { useAccount } from "wagmi";
 import { useState } from "react";
 import { useCreateWill, useGetWill } from "../../../hooks/useWallegacy";
-import { Heir } from "../../../lib/config";
+import { Heir } from "../../../lib/contracts/config";
 import { Address } from "viem";
 
 export default function Testator() {
