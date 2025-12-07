@@ -7,7 +7,7 @@ export type WillStatus = 0 | 1 | 2 | 3; // DRAFT, ACTIVE, EXECUTED, REVOKED
 
 export interface Heir {
     heirAddress: Address;
-    share: bigint;
+    percent: bigint;
 }
 
 export interface Will {

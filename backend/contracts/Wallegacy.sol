@@ -37,6 +37,7 @@ contract Wallegacy is Ownable {
         bool exists; // for getter function
         Heir[] heirs;
         address notary;
+        uint256 index;
     }
 
     struct Heir {
@@ -94,12 +95,20 @@ contract Wallegacy is Ownable {
     error Wallegacy__WillAlreadySet(address testatorAddress);
     error Wallegacy__TestatorWithoutWill(address sender);
     error Wallegacy__NotaryNegativeNumberOfWill(address notaryAddress);
+    error Wallegacy__RefundFailed(address testatorAddress);
 
     constructor() Ownable(msg.sender) {}
 
     modifier onlyNotary() {
         if (!s_notaries[msg.sender]) {
             revert Wallegacy__Unauthorized();
+        }
+        _;
+    }
+
+    modifier onlyTestator() {
+        if (!s_testators[msg.sender]) {
+            revert Wallegacy__NoTestator(msg.sender);
         }
         _;
     }
@@ -216,7 +225,8 @@ contract Wallegacy is Ownable {
             gasPayed: false,
             exists: true,
             heirs: newHeirs,
-            notary: msg.sender
+            notary: msg.sender,
+            index: s_notaryToTestators[msg.sender].length
         });
 
         registerTestator(testatorAddress);
@@ -271,13 +281,42 @@ contract Wallegacy is Ownable {
     }
 
     function cancelWill() public onlyTestatorOrNotary onlyWithSBTContractSet {
+        Will storage testatorWill = s_testatorToWill[msg.sender];
+        uint256 amountToRefund = s_testatorToValueLocked[msg.sender];
+        address notaryAddress = testatorWill.notary;
+        uint256 testatorIndex = testatorWill.index;
+
+        // REENTRANCY CHECK - We first change the state of BC before sending money
         delete s_testatorToWill[msg.sender].heirs;
+        s_testatorToValueLocked[msg.sender] = 0;
         s_testatorToWill[msg.sender].exists = false;
         s_testatorToWill[msg.sender].status = WillStatus.CANCELLED;
         s_testators[msg.sender] = false;
 
+        address[] storage testators = s_notaryToTestators[notaryAddress];
+        uint256 lastIndex = testators.length - 1;
+
+        if (testatorIndex != lastIndex) {
+            // Move last element to the deleted position
+            address lastTestator = testators[lastIndex];
+            testators[testatorIndex] = lastTestator;
+            // Update the moved testator's index
+            s_testatorToWill[lastTestator].index = testatorIndex;
+        }
+        testators.pop();
+
+        // TODO: SEND BACK VALUE TO TESTATOR
         removeWillToNotary(s_testatorToWill[msg.sender].notary);
         sbtContract.burn(msg.sender);
+
+        if (amountToRefund > 0) {
+            (bool success, ) = payable(msg.sender).call{value: amountToRefund}(
+                ""
+            );
+            if (!success) {
+                revert Wallegacy__RefundFailed(msg.sender);
+            }
+        }
 
         emit WillCancelled(msg.sender);
     }
