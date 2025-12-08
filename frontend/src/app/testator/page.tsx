@@ -172,7 +172,7 @@ export default function TestatorPage() {
           <div className="w-full max-w-2xl bg-white p-6 rounded-lg shadow-md border border-gray-200">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-semibold">Mon Testament</h2>
-              {will.status !== 3 && (
+              {will.status !== 3 && will.status !== 2 && (
                 <button
                   onClick={() => setShowCancelConfirm(true)}
                   className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm"
