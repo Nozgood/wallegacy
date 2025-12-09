@@ -73,7 +73,7 @@ contract WallegacySBT is ERC721 {
         // Allow minting (from == address(0))
         // Block any transfer or burn after minting
         if (from != address(0) && to != address(0) && to != from) {
-            revert("Soulbound: token is non-transferable");
+            revert SBT__TransferNotAllowed();
         }
 
         return super._update(to, tokenId, auth);

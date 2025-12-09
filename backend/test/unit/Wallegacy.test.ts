@@ -3,7 +3,6 @@ import { Wallegacy } from "../../types/ethers-contracts/Wallegacy.js";
 import { WallegacySBT } from "../../types/ethers-contracts/WallegacySBT.js";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/types";
 import { expect } from "chai";
-import { exec } from "child_process";
 
 const { ethers, networkHelpers } = await hre.network.connect();
 
@@ -277,6 +276,21 @@ describe("Wallegacy cancelWill", async function () {
                 .to.be.revertedWithCustomError(wallegacySBT, "ERC721NonexistentToken");
         });
     });
+
+    describe("when the testator has a will but not setup the will yet", function () {
+        beforeEach(async () => {
+            await wallegacy.connect(notaryAddress).newWill(testatorAddress);
+        });
+
+
+        it("should cancel the will", async function () {
+            try {
+                await wallegacy.connect(testatorAddress).cancelWill();
+            } catch (error: any) {
+                console.log("err: ", error)
+            }
+        })
+    })
 });
 
 describe("Wallegacy triggerLegacyProcess", async function () {

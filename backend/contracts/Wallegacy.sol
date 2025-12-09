@@ -106,13 +106,6 @@ contract Wallegacy is Ownable {
         _;
     }
 
-    modifier onlyTestator() {
-        if (!s_testators[msg.sender]) {
-            revert Wallegacy__NoTestator(msg.sender);
-        }
-        _;
-    }
-
     modifier onlyTestatorOrNotary() {
         if (!s_testators[msg.sender] && !isNotary(msg.sender)) {
             revert Wallegacy__NoTestator(msg.sender);
@@ -269,9 +262,9 @@ contract Wallegacy is Ownable {
             revert Wallegacy__NewWillNotGoodPercent(totalPercent);
         }
 
-        // lock the funds of the Testator
         lockTestatorFunds();
 
+        // todo mint the NFT in NewWill and use it to access to Setup
         sbtContract.mint(msg.sender);
 
         testatorWill.heirs = heirsParams;
@@ -305,11 +298,10 @@ contract Wallegacy is Ownable {
         }
         testators.pop();
 
-        // TODO: SEND BACK VALUE TO TESTATOR
         removeWillToNotary(s_testatorToWill[msg.sender].notary);
-        sbtContract.burn(msg.sender);
 
         if (amountToRefund > 0) {
+            sbtContract.burn(msg.sender);
             (bool success, ) = payable(msg.sender).call{value: amountToRefund}(
                 ""
             );
