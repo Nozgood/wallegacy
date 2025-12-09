@@ -10,6 +10,7 @@ import { useCancelWill } from "../../../hooks/contracts/useCancelWill";
 
 import { useState, useEffect } from "react";
 import { BaseError, ContractFunctionRevertedError } from "viem";
+import { ErrorMessage } from "@/components/ErrorMessage";
 
 const STATUS_LABELS = {
   0: "Brouillon",
@@ -38,7 +39,7 @@ export default function TestatorPage() {
     isConfirming: isCancelConfirming,
     isConfirmed: isCancelConfirmed,
     isError: isCancelError,
-    error: cancelError
+    errorMessage: cancelError
   } = useCancelWill();
 
   const [heirs, setHeirs] = useState<HeirInput[]>([{ heirAddress: "" as `0x${string}`, percent: 0 }]);
@@ -83,21 +84,6 @@ export default function TestatorPage() {
   const handleCancelWill = () => {
     cancelWill();
     setShowCancelConfirm(false);
-  };
-
-  const getErrorMessage = (err: typeof error | typeof cancelError): string => {
-    if (!err) return "";
-
-    if (err instanceof BaseError) {
-      const revertError = err.walk((e) => e instanceof ContractFunctionRevertedError);
-
-      if (revertError instanceof ContractFunctionRevertedError) {
-        const errorName = revertError.data?.errorName || "";
-        return ERROR_MESSAGES[errorName] || err.shortMessage || err.message;
-      }
-    }
-
-    return err.shortMessage || err.message;
   };
 
   if (!isConnected) {
@@ -172,7 +158,7 @@ export default function TestatorPage() {
           <div className="w-full max-w-2xl bg-white p-6 rounded-lg shadow-md border border-gray-200">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-semibold">Mon Testament</h2>
-              {will.status !== 3 && (
+              {will.status !== 3 && will.status !== 2 && (
                 <button
                   onClick={() => setShowCancelConfirm(true)}
                   className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm"
@@ -258,7 +244,7 @@ export default function TestatorPage() {
 
         {isCancelError && (
           <div className="w-full max-w-2xl bg-red-50 border border-red-200 rounded-lg p-4">
-            <p className="text-red-600 text-sm">{getErrorMessage(cancelError)}</p>
+            <p className="text-red-600 text-sm">{cancelError}</p>
           </div>
         )}
 
@@ -340,7 +326,7 @@ export default function TestatorPage() {
 
               {isError && (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                  <p className="text-red-600 text-sm">{getErrorMessage(error)}</p>
+                  <p className="text-red-600 text-sm">{cancelError}</p>
                 </div>
               )}
             </div>
