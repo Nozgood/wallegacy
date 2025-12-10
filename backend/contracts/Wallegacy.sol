@@ -50,7 +50,6 @@ contract Wallegacy is Ownable {
     mapping(address => address[]) private s_notaryToTestators;
     mapping(address => uint256) private s_testatorToValueLocked;
     mapping(address => bool) private s_testators;
-    mapping(address => uint256) private s_notaryToNumberOfWill;
     mapping(address => bool) private s_notaries;
 
     WallegacySBT public sbtContract;
@@ -61,16 +60,12 @@ contract Wallegacy is Ownable {
     event LegacySent(address indexed testatorAddress);
     event WillCancelled(address indexed testatorAddress);
     event SBTContractSet(address indexed sbtAddess);
-    event NotaryCancelWill(address indexed notaryAddress);
-    event NotaryNoMoreWill(address indexed notaryAddress);
     event NotaryNewWill(
         address indexed notaryAddress,
         address indexed testatorAddress
     );
     event NotaryRegistered(address indexed notaryAddress);
     event TestatorRegistered(address indexed testatorAddress);
-    event NotaryAddWill(address indexed notaryAddress);
-    event NotaryRemovedWill(address indexed notaryAddress);
 
     error Wallegacy__WillNotFound(address testatorAddress);
     error Wallegacy__NoHeirs();
@@ -84,17 +79,15 @@ contract Wallegacy is Ownable {
         address heirAddress,
         uint256 heirAmount
     );
-    error Wallegacy__WillDone();
+
     error Wallegacy__NoTestator(address sender);
-    error Wallegacy__TestatorAlreadyHasWill(address testatorAddress);
+    error Wallegacy__NoTestatorNoNotary(address sender);
     error WallegacySBT__NoAddress();
     error WallegacySBT__NotSet();
     error Wallegacy__Unauthorized();
-    error Wallegacy__NewWillMissingNotary();
     error Wallegacy__WillAlreadySet(address testatorAddress);
     error Wallegacy__TestatorWithoutWill(address sender);
-    error Wallegacy__NotaryNegativeNumberOfWill(address notaryAddress);
-    error Wallegacy__RefundFailed(address testatorAddress);
+    error Wallegacy__RefundFailed(address sender);
 
     constructor() Ownable(msg.sender) {}
 
@@ -105,9 +98,20 @@ contract Wallegacy is Ownable {
         _;
     }
 
+    modifier onlyTestator() {
+        if (address(sbtContract) == address(0)) {
+            revert WallegacySBT__NotSet();
+        }
+
+        if (sbtContract.balanceOf(msg.sender) != 1) {
+            revert Wallegacy__NoTestator(msg.sender);
+        }
+        _;
+    }
+
     modifier onlyTestatorOrNotary() {
         if (!s_testators[msg.sender] && !isNotary(msg.sender)) {
-            revert Wallegacy__NoTestator(msg.sender);
+            revert Wallegacy__NoTestatorNoNotary(msg.sender);
         }
         _;
     }
@@ -119,7 +123,7 @@ contract Wallegacy is Ownable {
         _;
     }
 
-    function getWill() public view onlyTestatorOrNotary returns (Will memory) {
+    function getWill() public view onlyTestator returns (Will memory) {
         Will memory will = s_testatorToWill[msg.sender];
 
         if (!will.exists) {
@@ -142,7 +146,7 @@ contract Wallegacy is Ownable {
 
     function getLockedValue(
         address testatorAddress
-    ) public view returns (uint256) {
+    ) public view onlyTestator returns (uint256) {
         return s_testatorToValueLocked[testatorAddress];
     }
 
@@ -175,24 +179,7 @@ contract Wallegacy is Ownable {
         emit TestatorRegistered(testatorAddress);
     }
 
-    function addWillToNotary() private onlyNotary {
-        s_notaryToNumberOfWill[msg.sender]++;
-
-        emit NotaryAddWill(msg.sender);
-    }
-
-    function removeWillToNotary(address notaryAddress) private {
-        s_notaryToNumberOfWill[notaryAddress]--;
-        if (s_notaryToNumberOfWill[notaryAddress] < 0) {
-            revert Wallegacy__NotaryNegativeNumberOfWill(notaryAddress);
-        }
-
-        emit NotaryRemovedWill(notaryAddress);
-    }
-
-    /// todo: add a check if Will exists here to allow people to fund the contract ?
-    function lockTestatorFunds() public payable onlyTestatorOrNotary {
-        // revert with custom errors is more gas efficient than require
+    function lockTestatorFunds() public payable onlyTestator {
         if (msg.value <= 0) {
             revert Wallegacy__NotEnoughAmount();
         }
@@ -221,17 +208,15 @@ contract Wallegacy is Ownable {
         });
 
         registerTestator(testatorAddress);
-        addWillToNotary();
 
         s_notaryToTestators[msg.sender].push(testatorAddress);
 
         emit NotaryNewWill(msg.sender, testatorAddress);
     }
 
-    /// TODO: add a check if the user has set multiple heirs with the same address ?
     function setUpWill(
         Heir[] memory heirsParams
-    ) public payable onlyWithSBTContractSet onlyTestatorOrNotary {
+    ) public payable onlyWithSBTContractSet onlyTestator {
         if (heirsParams.length == 0) {
             revert Wallegacy__NoHeirs();
         }
@@ -246,8 +231,6 @@ contract Wallegacy is Ownable {
         }
 
         uint8 totalPercent = 0;
-        // here we check if all heirs have a valid address
-        // we also increment to total percent to validate that it is strictly equal to 100
         for (uint256 i = 0; i < heirsParams.length; i++) {
             if (heirsParams[i].heirAddress == address(0)) {
                 revert Wallegacy__HeirWithoutAddress(i);
@@ -262,7 +245,6 @@ contract Wallegacy is Ownable {
 
         lockTestatorFunds();
 
-        // todo mint the NFT in NewWill and use it to access to Setup
         sbtContract.mint(msg.sender);
 
         testatorWill.heirs = heirsParams;
@@ -271,7 +253,7 @@ contract Wallegacy is Ownable {
         emit WillSetUp(msg.sender);
     }
 
-    function cancelWill() public onlyTestatorOrNotary onlyWithSBTContractSet {
+    function cancelWill() public onlyWithSBTContractSet onlyTestator {
         Will storage testatorWill = s_testatorToWill[msg.sender];
         uint256 amountToRefund = s_testatorToValueLocked[msg.sender];
         address notaryAddress = testatorWill.notary;
@@ -295,8 +277,6 @@ contract Wallegacy is Ownable {
             s_testatorToWill[lastTestator].index = testatorIndex;
         }
         testators.pop();
-
-        removeWillToNotary(s_testatorToWill[msg.sender].notary);
 
         if (amountToRefund > 0) {
             sbtContract.burn(msg.sender);
@@ -329,7 +309,6 @@ contract Wallegacy is Ownable {
         // we also can use OpenZeppelin library to setup a Guard (double check)
         testatorWill.status = WillStatus.DONE;
         s_testatorToValueLocked[testatorAddress] = 0;
-        removeWillToNotary(testatorWill.notary);
 
         // we compute the amount to send and we send it
         for (uint256 i = 0; i < testatorWill.heirs.length; i++) {
