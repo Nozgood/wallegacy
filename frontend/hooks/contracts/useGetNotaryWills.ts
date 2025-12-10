@@ -3,7 +3,7 @@ import { useReadContract, useAccount } from "wagmi";
 import { WALLEGACY_CONTRACT } from "../../lib/contracts/config";
 import { Address } from "viem";
 
-export type WillStatus = 0 | 1 | 2 | 3; // DRAFT, ACTIVE, EXECUTED, REVOKED
+export type WillStatus = 0 | 1 | 2 | 3; // DRAFT, SAVED, DONE, CANCELLED
 
 export interface Heir {
     heirAddress: Address;
@@ -13,7 +13,6 @@ export interface Heir {
 export interface Will {
     testator: Address;
     status: WillStatus;
-    gasPayed: boolean;
     exists: boolean;
     heirs: Heir[];
     notary: Address;

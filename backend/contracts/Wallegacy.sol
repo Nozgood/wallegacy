@@ -24,7 +24,7 @@ import "./WallegacySBT.sol";
 
 contract Wallegacy is Ownable {
     enum WillStatus {
-        DRAFT, // DRAFT is the gasPayed property is set to false, the Will is mandatory DRAFT
+        DRAFT, // DRAFT is set when the notary has created the Will but the testator does not have set it up yet
         SAVED, // SAVED is used when all necessaries elements of the Will are correctly set
         DONE, // DONE is used when funds has been sent to heirs
         CANCELLED // CANCELLES is used only when a Testator call CancelWill() function
@@ -33,7 +33,6 @@ contract Wallegacy is Ownable {
     struct Will {
         address testator;
         WillStatus status;
-        bool gasPayed; // DEPRECATED - TO BE REMOVED
         bool exists; // for getter function
         Heir[] heirs;
         address notary;
@@ -215,7 +214,6 @@ contract Wallegacy is Ownable {
         s_testatorToWill[testatorAddress] = Will({
             testator: testatorAddress,
             status: WillStatus.DRAFT,
-            gasPayed: false,
             exists: true,
             heirs: newHeirs,
             notary: msg.sender,

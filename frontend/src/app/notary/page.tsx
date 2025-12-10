@@ -204,11 +204,6 @@ export default function NotaryPage() {
                       <span className="font-semibold text-gray-700">Héritiers:</span>
                       <span>{will.heirs.length}</span>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="font-semibold text-gray-700">Gas payé:</span>
-                      <span>{will.gasPayed ? "✓ Oui" : "✗ Non"}</span>
-                    </div>
-
                     {will.status === 1 && (
                       <button
                         onClick={() => setConfirmDecease(will.testator)}

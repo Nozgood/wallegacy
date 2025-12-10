@@ -187,10 +187,6 @@ export default function TestatorPage() {
                 <span className="font-semibold text-gray-700">Héritiers:</span>
                 <span>{will.heirs.length}</span>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="font-semibold text-gray-700">Gas payé:</span>
-                <span>{will.gasPayed ? "✓ Oui" : "✗ Non"}</span>
-              </div>
             </div>
 
             {will.heirs.length > 0 && (
