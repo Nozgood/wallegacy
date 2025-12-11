@@ -3,29 +3,11 @@ pragma solidity ^0.8.30;
 
 import "./WallegacySBT.sol";
 
-/*
-  Contract elements should be laid out in the following order:
-    1. Pragma statements
-    2. Import statements
-    3. Events
-    4. Errors
-    5. Interfaces
-    6. Libraries
-    7. Contracts
-
-  Inside each contract, library or interface, use the following order:
-    1. Type declarations
-    2. State variables
-    3. Events
-    4. Errors
-    5. Modifiers
-    6. Functions 
-*/
-
 contract Wallegacy is Ownable {
     enum WillStatus {
         DRAFT, // DRAFT is set when the notary has created the Will but the testator does not have set it up yet
         SAVED, // SAVED is used when all necessaries elements of the Will are correctly set
+        WAITING_LEGACY,
         DONE, // DONE is used when funds has been sent to heirs
         CANCELLED // CANCELLES is used only when a Testator call CancelWill() function
     }
@@ -42,10 +24,10 @@ contract Wallegacy is Ownable {
     struct Heir {
         address heirAddress;
         uint8 percent;
+        uint256 legacy;
     }
 
-    //    address private immutable i_relayerAddress;
-
+    mapping(address => bool) private s_waitingHeirs;
     mapping(address => Will) private s_testatorToWill;
     mapping(address => address[]) private s_notaryToTestators;
     mapping(address => uint256) private s_testatorToValueLocked;
@@ -66,6 +48,8 @@ contract Wallegacy is Ownable {
     );
     event NotaryRegistered(address indexed notaryAddress);
     event TestatorRegistered(address indexed testatorAddress);
+    event LegacyDone(address indexed testatorAddress);
+    event Wallegacy__TriggerLegacyProcess(address indexed testatorAddress);
 
     error Wallegacy__WillNotFound(address testatorAddress);
     error Wallegacy__NoHeirs();
@@ -88,6 +72,8 @@ contract Wallegacy is Ownable {
     error Wallegacy__WillAlreadySet(address testatorAddress);
     error Wallegacy__TestatorWithoutWill(address sender);
     error Wallegacy__RefundFailed(address sender);
+    error Wallegacy__NoLegacy(address testatorAddress);
+    error Wallegacy__NoCancelPossible();
 
     constructor() Ownable(msg.sender) {}
 
@@ -156,6 +142,10 @@ contract Wallegacy is Ownable {
 
     function isTestator() external view returns (bool) {
         return s_testators[msg.sender];
+    }
+
+    function isWaitingHeir() external view returns (bool) {
+        return s_waitingHeirs[msg.sender];
     }
 
     function setSBTContract(address _sbtContract) external {
@@ -236,6 +226,7 @@ contract Wallegacy is Ownable {
                 revert Wallegacy__HeirWithoutAddress(i);
             }
 
+            heirsParams[i].legacy = (msg.value * heirsParams[i].percent) / 100;
             totalPercent += heirsParams[i].percent;
         }
 
@@ -255,6 +246,10 @@ contract Wallegacy is Ownable {
 
     function cancelWill() public onlyWithSBTContractSet onlyTestator {
         Will storage testatorWill = s_testatorToWill[msg.sender];
+        if (testatorWill.status == WillStatus.WAITING_LEGACY) {
+            revert Wallegacy__NoCancelPossible();
+        }
+
         uint256 amountToRefund = s_testatorToValueLocked[msg.sender];
         address notaryAddress = testatorWill.notary;
         uint256 testatorIndex = testatorWill.index;
@@ -270,16 +265,17 @@ contract Wallegacy is Ownable {
         uint256 lastIndex = testators.length - 1;
 
         if (testatorIndex != lastIndex) {
-            // Move last element to the deleted position
             address lastTestator = testators[lastIndex];
             testators[testatorIndex] = lastTestator;
-            // Update the moved testator's index
             s_testatorToWill[lastTestator].index = testatorIndex;
         }
         testators.pop();
 
-        if (amountToRefund > 0) {
+        if (testatorWill.status == WillStatus.SAVED) {
             sbtContract.burn(msg.sender);
+        }
+
+        if (amountToRefund > 0) {
             (bool success, ) = payable(msg.sender).call{value: amountToRefund}(
                 ""
             );
@@ -292,42 +288,55 @@ contract Wallegacy is Ownable {
     }
 
     function triggerLegacyProcess(address testatorAddress) public onlyNotary {
-        sendLegacyToHeirs(testatorAddress);
-    }
-
-    /// todo manage correctly the rest
-    function sendLegacyToHeirs(address testatorAddress) private {
         if (!s_testators[testatorAddress]) {
             revert Wallegacy__NoTestator(testatorAddress);
         }
 
         Will storage testatorWill = s_testatorToWill[testatorAddress];
-        uint256 valueLocked = s_testatorToValueLocked[testatorAddress];
+        testatorWill.status = WillStatus.WAITING_LEGACY;
 
-        // we first change the state of the contract before sending ETH to avoid reentrancy
-        // pattern Check Effect Interaction (CEI)
-        // we also can use OpenZeppelin library to setup a Guard (double check)
-        testatorWill.status = WillStatus.DONE;
-        s_testatorToValueLocked[testatorAddress] = 0;
-
-        // we compute the amount to send and we send it
         for (uint256 i = 0; i < testatorWill.heirs.length; i++) {
-            uint256 heirAmount = (valueLocked * testatorWill.heirs[i].percent) /
-                100;
-
-            (bool success, ) = testatorWill.heirs[i].heirAddress.call{
-                value: heirAmount
-            }("");
-            if (!success) {
-                revert Wallegacy__ErrorSendingLegacy(
-                    testatorAddress,
-                    testatorWill.heirs[i].heirAddress,
-                    heirAmount
-                );
-            }
-            emit LegacySentToHeir(testatorWill.heirs[i].heirAddress);
+            Heir storage heir = testatorWill.heirs[i];
+            s_waitingHeirs[heir.heirAddress] = true;
         }
 
-        emit LegacySent(testatorAddress);
+        emit Wallegacy__TriggerLegacyProcess(testatorAddress);
+    }
+
+    function claimLegacy(address testatorAddress) public {
+        Will storage testatorWill = s_testatorToWill[testatorAddress];
+        if (!testatorWill.exists) {
+            revert Wallegacy__NoLegacy(testatorAddress);
+        }
+
+        for (uint256 i = 0; i < testatorWill.heirs.length; i++) {
+            Heir storage heir = testatorWill.heirs[i];
+            if (heir.heirAddress == msg.sender) {
+                uint256 legacy = heir.legacy;
+                testatorWill.heirs[i] = testatorWill.heirs[
+                    testatorWill.heirs.length - 1
+                ];
+                testatorWill.heirs.pop();
+                s_waitingHeirs[heir.heirAddress] = false;
+                s_testatorToValueLocked[testatorAddress] -= legacy;
+
+                (bool success, ) = msg.sender.call{value: legacy}("");
+                if (!success) {
+                    revert Wallegacy__ErrorSendingLegacy(
+                        testatorAddress,
+                        msg.sender,
+                        legacy
+                    );
+                }
+
+                emit LegacySentToHeir(msg.sender);
+                break;
+            }
+
+            if (testatorWill.heirs.length == 0) {
+                testatorWill.status = WillStatus.DONE;
+                emit LegacyDone(testatorAddress);
+            }
+        }
     }
 }
