@@ -7,7 +7,16 @@ import { expect } from "chai";
 const { ethers, networkHelpers } = await hre.network.connect();
 
 async function setUpWallegacy() {
-    const [ownerAddress, notOwnerAddress, notaryAddress, anotherNotaryAddress, heirOneAddress, heirTwoAddress, heirThreeAddress, testatorAddress]: HardhatEthersSigner = await ethers.getSigners();
+    const [
+        ownerAddress,
+        notOwnerAddress,
+        notaryAddress,
+        anotherNotaryAddress,
+        heirOneAddress,
+        heirTwoAddress,
+        heirThreeAddress,
+        testatorAddress
+    ]: HardhatEthersSigner = await ethers.getSigners();
     const wallegacy: Wallegacy = await ethers.deployContract("Wallegacy", ownerAddress);
     const wallegacySBT: WallegacySBT = await ethers.deployContract("WallegacySBT", ["localhost.com", wallegacy]);
 
