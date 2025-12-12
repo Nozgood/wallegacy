@@ -181,7 +181,9 @@ contract Wallegacy is Ownable {
 
     /// @dev this function should only be called by a notary to setup the Will of a Testator
     /// @dev after this processs, it should be the testator who will update the Will setting up his heirs etc
-    function newWill(address testatorAddress) public onlyNotary {
+    function newWill(
+        address testatorAddress
+    ) public onlyNotary onlyWithSBTContractSet {
         if (s_testatorToWill[testatorAddress].exists) {
             revert Wallegacy__WillAlreadySet(testatorAddress);
         }
@@ -200,6 +202,7 @@ contract Wallegacy is Ownable {
         registerTestator(testatorAddress);
 
         s_notaryToTestators[msg.sender].push(testatorAddress);
+        sbtContract.mint(testatorAddress);
 
         emit NotaryNewWill(msg.sender, testatorAddress);
     }
@@ -236,8 +239,6 @@ contract Wallegacy is Ownable {
 
         lockTestatorFunds();
 
-        sbtContract.mint(msg.sender);
-
         testatorWill.heirs = heirsParams;
         testatorWill.status = WillStatus.SAVED;
 
@@ -271,9 +272,7 @@ contract Wallegacy is Ownable {
         }
         testators.pop();
 
-        if (testatorWill.status == WillStatus.SAVED) {
-            sbtContract.burn(msg.sender);
-        }
+        sbtContract.burn(msg.sender);
 
         if (amountToRefund > 0) {
             (bool success, ) = payable(msg.sender).call{value: amountToRefund}(
@@ -312,10 +311,15 @@ contract Wallegacy is Ownable {
         for (uint256 i = 0; i < testatorWill.heirs.length; i++) {
             Heir storage heir = testatorWill.heirs[i];
             if (heir.heirAddress == msg.sender) {
+                s_waitingHeirs[msg.sender] = false;
                 uint256 legacy = heir.legacy;
-                testatorWill.heirs[i] = testatorWill.heirs[
-                    testatorWill.heirs.length - 1
-                ];
+
+                if (testatorWill.heirs.length > 1) {
+                    testatorWill.heirs[i] = testatorWill.heirs[
+                        testatorWill.heirs.length - 1
+                    ];
+                }
+
                 testatorWill.heirs.pop();
                 s_waitingHeirs[heir.heirAddress] = false;
                 s_testatorToValueLocked[testatorAddress] -= legacy;
@@ -332,11 +336,11 @@ contract Wallegacy is Ownable {
                 emit LegacySentToHeir(msg.sender);
                 break;
             }
+        }
 
-            if (testatorWill.heirs.length == 0) {
-                testatorWill.status = WillStatus.DONE;
-                emit LegacyDone(testatorAddress);
-            }
+        if (testatorWill.heirs.length == 0) {
+            testatorWill.status = WillStatus.DONE;
+            emit LegacyDone(testatorAddress);
         }
     }
 }
