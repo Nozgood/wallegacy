@@ -9,8 +9,6 @@ import { useSetUpWill, HeirInput } from "../../../hooks/contracts/useSetUpWill";
 import { useCancelWill } from "../../../hooks/contracts/useCancelWill";
 
 import { useState, useEffect } from "react";
-import { BaseError, ContractFunctionRevertedError } from "viem";
-import { ErrorMessage } from "@/components/ErrorMessage";
 
 const STATUS_LABELS = {
   0: "Brouillon",
@@ -19,14 +17,6 @@ const STATUS_LABELS = {
   3: "Révoqué",
 } as const;
 
-const ERROR_MESSAGES: Record<string, string> = {
-  "Wallegacy__WillNotFound": "Aucun testament trouvé",
-  "Wallegacy__NoHeirs": "Vous devez ajouter au moins un héritier",
-  "Wallegacy__NotEnoughAmount": "Le montant doit être supérieur à 0",
-  "Wallegacy__TestatorWithoutWill": "Vous n'avez pas de testament",
-  "Wallegacy__NewWillNotGoodPercent": "La somme des pourcentages doit être égale à 100%",
-  "Wallegacy__HeirWithoutAddress": "L'adresse d'un héritier est invalide",
-};
 
 export default function TestatorPage() {
   const { isConnected } = useAccount();
@@ -42,7 +32,7 @@ export default function TestatorPage() {
     errorMessage: cancelError
   } = useCancelWill();
 
-  const [heirs, setHeirs] = useState<HeirInput[]>([{ heirAddress: "" as `0x${string}`, percent: 0 }]);
+  const [heirs, setHeirs] = useState<HeirInput[]>([{ heirAddress: "" as `0x${string}`, percent: 0, legacy: 0 }]);
   const [amount, setAmount] = useState<string>("");
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
@@ -53,7 +43,7 @@ export default function TestatorPage() {
   }, [isConfirmed, isCancelConfirmed, refetchWill]);
 
   const addHeir = () => {
-    setHeirs([...heirs, { heirAddress: "" as `0x${string}`, percent: 0 }]);
+    setHeirs([...heirs, { heirAddress: "" as `0x${string}`, percent: 0, legacy: 0 }]);
   };
 
   const removeHeir = (index: number) => {

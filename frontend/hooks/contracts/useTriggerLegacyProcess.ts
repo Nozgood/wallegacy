@@ -1,15 +1,9 @@
-// hooks/contracts/useSetUpWill.ts
-import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+// hooks/contracts/useTriggerLegacy.ts
+import { useWriteContract, useWaitForTransactionReceipt, useAccount } from "wagmi";
 import { WALLEGACY_CONTRACT } from "../../lib/contracts/config";
-import { parseEther } from "viem";
 
-export interface HeirInput {
-    heirAddress: `0x${string}`;
-    percent: number;
-    legacy: number;
-}
-
-export function useSetUpWill() {
+export function useTriggerLegacyProcess() {
+    const { address } = useAccount();
     const { writeContract, data: hash, isPending, isError: isWriteError, error: writeError } = useWriteContract();
 
     const {
@@ -21,17 +15,17 @@ export function useSetUpWill() {
         hash,
     });
 
-    const setUpWill = (heirs: HeirInput[], amountInEth: string) => {
+    const triggerLegacy = (testatorAddress: `0x${string}`) => {
         writeContract({
             ...WALLEGACY_CONTRACT,
-            functionName: "setUpWill",
-            args: [heirs],
-            value: parseEther(amountInEth),
+            functionName: "triggerLegacyProcess",
+            args: [testatorAddress],
+            account: address,
         });
     };
 
     return {
-        setUpWill,
+        triggerLegacy,
         isPending,
         isConfirming,
         isConfirmed,
