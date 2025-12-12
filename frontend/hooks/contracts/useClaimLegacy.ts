@@ -1,8 +1,7 @@
-// hooks/contracts/useTriggerLegacy.ts
 import { useWriteContract, useWaitForTransactionReceipt, useAccount } from "wagmi";
 import { WALLEGACY_CONTRACT } from "../../lib/contracts/config";
 
-export function useTriggerLegacy() {
+export function useClaimLegacy() {
     const { address } = useAccount();
     const { writeContract, data: hash, isPending, isError: isWriteError, error: writeError } = useWriteContract();
 
@@ -15,17 +14,17 @@ export function useTriggerLegacy() {
         hash,
     });
 
-    const triggerLegacy = (testatorAddress: `0x${string}`) => {
+    const claimLegacy = (testatorAddress: `0x${string}`) => {
         writeContract({
             ...WALLEGACY_CONTRACT,
-            functionName: "triggerLegacyProcess",
+            functionName: "claimLegacy",
             args: [testatorAddress],
             account: address,
         });
     };
 
     return {
-        triggerLegacy,
+        claimLegacy,
         isPending,
         isConfirming,
         isConfirmed,

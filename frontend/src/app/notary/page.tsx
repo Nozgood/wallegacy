@@ -7,14 +7,15 @@ import { useIsNotary } from "../../../hooks/contracts/useIsNotary";
 import { useNewWill } from "../../../hooks/contracts/useNewWill";
 import { useState, useEffect } from "react";
 import { useGetNotaryWills } from "../../../hooks/contracts/useGetNotaryWills";
-import { useTriggerLegacy } from "../../../hooks/contracts/useTriggerLegacy";
+import { useTriggerLegacyProcess } from "../../../hooks/contracts/useTriggerLegacyProcess";
 import { BaseError, ContractFunctionRevertedError } from "viem";
 
 const STATUS_LABELS = {
   0: "Brouillon",
   1: "Actif",
-  2: "Exécuté",
-  3: "Révoqué",
+  2: "En attente de Legs",
+  3: "Terminé",
+  4: "Révoqué"
 } as const;
 
 const ERROR_MESSAGES: Record<string, string> = {
@@ -37,7 +38,7 @@ export default function NotaryPage() {
     isConfirmed: isTriggerConfirmed,
     isError: isTriggerError,
     error: triggerError
-  } = useTriggerLegacy();
+  } = useTriggerLegacyProcess();
 
   const [testatorAddress, setTestatorAddress] = useState<string>("");
   const [confirmDecease, setConfirmDecease] = useState<string | null>(null);
@@ -58,21 +59,6 @@ export default function NotaryPage() {
   const handleTriggerLegacy = (testator: `0x${string}`) => {
     triggerLegacy(testator);
     setConfirmDecease(null);
-  };
-
-  const getErrorMessage = (err: typeof error | typeof triggerError): string => {
-    if (!err) return "";
-
-    if (err instanceof BaseError) {
-      const revertError = err.walk((e) => e instanceof ContractFunctionRevertedError);
-
-      if (revertError instanceof ContractFunctionRevertedError) {
-        const errorName = revertError.data?.errorName || "";
-        return ERROR_MESSAGES[errorName] || err.shortMessage || err.message;
-      }
-    }
-
-    return err.shortMessage || err.message;
   };
 
   if (!isConnected) {
@@ -146,20 +132,20 @@ export default function NotaryPage() {
           {isConfirmed && <p className="text-green-600">✓ Testament créé avec succès</p>}
           {isError && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 w-full">
-              <p className="text-red-600 text-sm">{getErrorMessage(error)}</p>
+              <p className="text-red-600 text-sm">{error?.message}</p>
             </div>
           )}
         </div>
 
         {isTriggerConfirmed && (
           <div className="w-full max-w-4xl bg-green-50 border border-green-200 rounded-lg p-4">
-            <p className="text-green-600 text-center">✓ Legs distribués avec succès</p>
+            <p className="text-green-600 text-center">✓ Processus de succession déclenché avec succès</p>
           </div>
         )}
 
         {isTriggerError && (
           <div className="w-full max-w-4xl bg-red-50 border border-red-200 rounded-lg p-4">
-            <p className="text-red-600 text-sm">{getErrorMessage(triggerError)}</p>
+            <p className="text-red-600 text-sm">{triggerError?.message}</p>
           </div>
         )}
 
@@ -225,13 +211,13 @@ export default function NotaryPage() {
             <div className="bg-white p-6 rounded-lg shadow-xl max-w-md">
               <h3 className="text-xl font-semibold mb-4">Confirmer le décès</h3>
               <p className="text-gray-600 mb-2">
-                Vous êtes sur le point de déclencher la distribution du legs pour le testateur :
+                Vous êtes sur le point de declencher le processus d'héritage:
               </p>
               <p className="font-mono text-sm bg-gray-100 p-2 rounded mb-4 break-all">
                 {confirmDecease}
               </p>
               <p className="text-red-600 text-sm mb-6">
-                Cette action est irréversible et distribuera les fonds aux héritiers.
+                Cette action permettra aux héritiers de réclamer leurs parts.
               </p>
               <div className="flex gap-4">
                 <button
