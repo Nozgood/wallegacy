@@ -1,4 +1,3 @@
-// app/testator/page.tsx
 "use client";
 
 import { useAccount } from "wagmi";
@@ -7,15 +6,10 @@ import { useIsTestator } from "../../../hooks/contracts/useIsTestator";
 import { useGetWill } from "../../../hooks/contracts/useGetWill";
 import { useSetUpWill, HeirInput } from "../../../hooks/contracts/useSetUpWill";
 import { useCancelWill } from "../../../hooks/contracts/useCancelWill";
+import { useGetLockedValue } from "../../../hooks/contracts/useGetLockedValue";
+import { STATUS_LABELS } from "../../../utils/constants";
 
 import { useState, useEffect } from "react";
-
-const STATUS_LABELS = {
-  0: "Brouillon",
-  1: "Actif",
-  2: "Exécuté",
-  3: "Révoqué",
-} as const;
 
 
 export default function TestatorPage() {
@@ -23,6 +17,8 @@ export default function TestatorPage() {
   const { isTestator, isLoading: isLoadingTestator } = useIsTestator();
   const { will, refetch: refetchWill, isLoading: isLoadingWill, isError: isWillError } = useGetWill();
   const { setUpWill, isPending, isConfirming, isConfirmed, isError, error } = useSetUpWill();
+  const { lockedValueFormatted, refetch: refetchLockedValue } = useGetLockedValue();
+
   const {
     cancelWill,
     isPending: isCancelPending,
@@ -39,8 +35,9 @@ export default function TestatorPage() {
   useEffect(() => {
     if (isConfirmed || isCancelConfirmed) {
       refetchWill();
+      refetchLockedValue();
     }
-  }, [isConfirmed, isCancelConfirmed, refetchWill]);
+  }, [isConfirmed, isCancelConfirmed, refetchWill, refetchLockedValue]);
 
   const addHeir = () => {
     setHeirs([...heirs, { heirAddress: "" as `0x${string}`, percent: 0, legacy: 0 }]);
@@ -174,11 +171,14 @@ export default function TestatorPage() {
                 <span className="font-mono text-sm">{will.notary}</span>
               </div>
               <div className="flex justify-between items-center">
+                <span className="font-semibold text-gray-700">Montant verrouillé:</span>
+                <span className="font-semibold text-green-600">{lockedValueFormatted} ETH</span>
+              </div>
+              <div className="flex justify-between items-center">
                 <span className="font-semibold text-gray-700">Héritiers:</span>
                 <span>{will.heirs.length}</span>
               </div>
             </div>
-
             {will.heirs.length > 0 && (
               <div className="mt-6">
                 <h3 className="font-semibold text-gray-700 mb-3">Liste des héritiers:</h3>

@@ -7,7 +7,7 @@ contract Wallegacy is Ownable {
     enum WillStatus {
         DRAFT, // DRAFT is set when the notary has created the Will but the testator does not have set it up yet
         SAVED, // SAVED is used when all necessaries elements of the Will are correctly set
-        WAITING_LEGACY,
+        WAITING_LEGACY, // WAITING_LEGACY is used when the notary has start legs distribution process and NOT ALL the heirs have claim their legs
         DONE, // DONE is used when funds has been sent to heirs
         CANCELLED // CANCELLES is used only when a Testator call CancelWill() function
     }
@@ -91,13 +91,6 @@ contract Wallegacy is Ownable {
 
         if (sbtContract.balanceOf(msg.sender) != 1) {
             revert Wallegacy__NoTestator(msg.sender);
-        }
-        _;
-    }
-
-    modifier onlyTestatorOrNotary() {
-        if (!s_testators[msg.sender] && !isNotary(msg.sender)) {
-            revert Wallegacy__NoTestatorNoNotary(msg.sender);
         }
         _;
     }
