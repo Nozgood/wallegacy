@@ -74,6 +74,8 @@ contract Wallegacy is Ownable {
     error Wallegacy__RefundFailed(address sender);
     error Wallegacy__NoLegacy(address testatorAddress);
     error Wallegacy__NoCancelPossible();
+    error Wallegacy__TestatorHeir();
+    error Wallegacy__NotaryAlreadyRegistered();
 
     constructor() Ownable(msg.sender) {}
 
@@ -89,9 +91,8 @@ contract Wallegacy is Ownable {
             revert WallegacySBT__NotSet();
         }
 
-        if (sbtContract.balanceOf(msg.sender) != 1) {
+        if (sbtContract.balanceOf(msg.sender) != 1)
             revert Wallegacy__NoTestator(msg.sender);
-        }
         _;
     }
 
@@ -151,8 +152,11 @@ contract Wallegacy is Ownable {
     }
 
     function registerNotary(address notaryAddress) public onlyOwner {
-        s_notaries[notaryAddress] = true;
+        if (s_notaries[notaryAddress] == true) {
+            revert Wallegacy__NotaryAlreadyRegistered();
+        }
 
+        s_notaries[notaryAddress] = true;
         emit NotaryRegistered(notaryAddress);
     }
 
@@ -220,6 +224,10 @@ contract Wallegacy is Ownable {
         for (uint256 i = 0; i < heirsParams.length; i++) {
             if (heirsParams[i].heirAddress == address(0)) {
                 revert Wallegacy__HeirWithoutAddress(i);
+            }
+
+            if (heirsParams[i].heirAddress == msg.sender) {
+                revert Wallegacy__TestatorHeir();
             }
 
             heirsParams[i].legacy = (msg.value * heirsParams[i].percent) / 100;

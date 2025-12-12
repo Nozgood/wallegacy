@@ -7,7 +7,7 @@ import {
   RainbowKitProvider,
 } from '@rainbow-me/rainbowkit';
 import { WagmiProvider } from 'wagmi';
-import { hardhat } from 'wagmi/chains';
+import { hardhat, sepolia } from 'wagmi/chains';
 import {
   QueryClientProvider,
   QueryClient,
@@ -16,18 +16,18 @@ import {
 const config = getDefaultConfig({
   appName: 'Wallegacy DApp',
   projectId: 'cd5e882efd372f6cba03a79d5145c099', // it seems not to be essential but we set it https://dashboard.reown.com/da31fbe9-3e1a-48a4-becb-3904ae766a7c/66a6c27a-fe93-4bc0-b645-ad36920daff8
-  chains: [hardhat],
+  chains: [sepolia],
   ssr: true, // If your dApp uses server side rendering (SSR)
 });
 
 const queryClient = new QueryClient();
 
-const RainbowKitAndWagmi = ({children}: {children: React.ReactNode}) => {
+const RainbowKitAndWagmi = ({ children }: { children: React.ReactNode }) => {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider>
-            {children}
+          {children}
         </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>

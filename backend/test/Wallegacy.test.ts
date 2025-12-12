@@ -187,6 +187,18 @@ describe("Wallegacy setUpWill", async function () {
                 })
             })
 
+            describe("the testator provides his own address", async function () {
+                it("should reverts with Wallegacy__NoHeirs error", async function () {
+                    const heirs: Wallegacy.HeirStruct[] = [
+                        { heirAddress: testatorAddress, percent: 50, legacy: 0 },
+                    ]
+                    await expect(wallegacy.connect(testatorAddress).setUpWill(heirs, { value: depositAmount }))
+                        .to.be.revertedWithCustomError(wallegacy, "Wallegacy__TestatorHeir");
+                })
+            })
+
+
+
 
             describe("the testator do not send funds", async function () {
                 it("should reverts with Wallegacy__NewWillNotGoodPercent error", async function () {

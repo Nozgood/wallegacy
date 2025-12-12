@@ -1,8 +1,11 @@
 import { Address } from "viem";
 import WallegacyABI from "../../../backend/artifacts/contracts/Wallegacy.sol/Wallegacy.json";
 
-export const WALLEGACY_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
-export const OWNER_ADDRESS = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+// local =>
+// export const WALLEGACY_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+// export const OWNER_ADDRESS = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+export const WALLEGACY_ADDRESS = "0x9B1271d904720Da0eEc5c304854C7fa6f9a585Fc"
+export const OWNER_ADDRESS = "0xa28d5b8b1c382403ab7255c9e5caeaf026059482"
 
 export const WALLEGACY_CONTRACT = {
     address: WALLEGACY_ADDRESS as Address,
