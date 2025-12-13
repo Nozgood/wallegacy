@@ -12,7 +12,7 @@ export function useIsOwner() {
         },
     });
 
-    const isOwner = address?.toLowerCase() === ownerAddress?.toLowerCase();
+    const isOwner = address === ownerAddress;
 
     return {
         isOwner,

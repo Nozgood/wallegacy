@@ -42,21 +42,6 @@ export default function HeirPage() {
         }
     };
 
-    const getErrorMessage = (err: typeof error): string => {
-        if (!err) return "";
-
-        if (err instanceof BaseError) {
-            const revertError = err.walk((e) => e instanceof ContractFunctionRevertedError);
-
-            if (revertError instanceof ContractFunctionRevertedError) {
-                const errorName = revertError.data?.errorName || "";
-                return ERROR_MESSAGES[errorName] || err.shortMessage || err.message;
-            }
-        }
-
-        return err.shortMessage || err.message;
-    };
-
     if (!isConnected) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen gap-6 bg-gray-100 p-6">
@@ -116,7 +101,7 @@ export default function HeirPage() {
 
                 {isError && (
                     <div className="w-full max-w-md bg-red-50 border border-red-200 rounded-lg p-4">
-                        <p className="text-red-600 text-sm">{getErrorMessage(error)}</p>
+                        <p className="text-red-600 text-sm">{error?.message}</p>
                     </div>
                 )}
 

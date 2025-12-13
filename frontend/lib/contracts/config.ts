@@ -1,5 +1,6 @@
 import { Address } from "viem";
-import WallegacyABI from "../../../backend/artifacts/contracts/Wallegacy.sol/Wallegacy.json";
+// import WallegacyABI from "../../../backend/artifacts/contracts/Wallegacy.sol/Wallegacy.json";
+import WallegacyABI from "./abi_v001.json";
 
 // local =>
 // export const WALLEGACY_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
