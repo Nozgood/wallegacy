@@ -477,10 +477,13 @@ describe("Wallegacy claimLegacy", async function () {
                 await wallegacy.connect(notaryAddress).triggerLegacyProcess(testatorAddress);
             });
 
-            it("should allow first heir to claim their share", async function () {
+            it("should allow first heir and second heir to claim their share", async function () {
                 const contractBalanceBefore = await ethers.provider.getBalance(wallegacy);
                 const heirBalanceBefore = await ethers.provider.getBalance(heirOneAddress);
                 const expectedAmount = depositAmount / 2n;
+
+                const isWaitingHeirTwoBefore = await wallegacy.connect(heirTwoAddress).isWaitingHeir();
+                expect(isWaitingHeirTwoBefore).to.be.true;
 
                 await expect(wallegacy.connect(heirOneAddress).claimLegacy(testatorAddress))
                     .to.emit(wallegacy, "LegacySentToHeir").withArgs(heirOneAddress);
@@ -496,6 +499,13 @@ describe("Wallegacy claimLegacy", async function () {
 
                 const isWaitingHeirOne = await wallegacy.connect(heirOneAddress).isWaitingHeir();
                 expect(isWaitingHeirOne).to.be.false;
+
+                const isWaitingHeirTwoAfterOne = await wallegacy.connect(heirTwoAddress).isWaitingHeir();
+                expect(isWaitingHeirTwoAfterOne).to.be.true;
+
+                await expect(wallegacy.connect(heirTwoAddress).claimLegacy(testatorAddress))
+                    .to.emit(wallegacy, "LegacySentToHeir").withArgs(heirTwoAddress)
+                    .and.to.emit(wallegacy, "LegacyDone").withArgs(testatorAddress);
             });
 
             it("should allow second heir to claim after first heir claimed", async function () {

@@ -105,8 +105,7 @@ contract Wallegacy is Ownable {
     }
 
     modifier onlyWaitingHeir() {
-        if (s_waitingHeirs[msg.sender] == false)
-            revert Wallegacy__NoWaitingHeir();
+        if (!s_waitingHeirs[msg.sender]) revert Wallegacy__NoWaitingHeir();
         _;
     }
 
@@ -318,10 +317,11 @@ contract Wallegacy is Ownable {
 
         bool heirValid = false;
         uint256 heirLegacy = 0;
+
         for (uint256 i = 0; i < testatorWill.heirs.length; i++) {
-            Heir storage heir = testatorWill.heirs[i];
+            Heir memory heir = testatorWill.heirs[i];
+
             if (heir.heirAddress == msg.sender) {
-                s_waitingHeirs[msg.sender] = false;
                 heirLegacy = heir.legacy;
 
                 if (testatorWill.heirs.length > 1) {
@@ -349,6 +349,7 @@ contract Wallegacy is Ownable {
         }
 
         if (heirValid) {
+            s_waitingHeirs[msg.sender] = false;
             (bool success, ) = msg.sender.call{value: heirLegacy}("");
             if (!success) {
                 revert Wallegacy__ErrorSendingLegacy(

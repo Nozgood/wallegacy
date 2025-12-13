@@ -1,11 +1,18 @@
 import hre from "hardhat";
 
-async function main() {
-    const contractAddress = "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0"
-    const wallegacy = await hre.ethers.getContractAt("Wallegacy", contractAddress)
 
-    const will = await wallegacy.getWillByTestator("0xdD2FD4581271e230360230F9337D5c0430Bf44C0")
-    console.log(will)
+const { ethers, networkHelpers } = await hre.network.connect();
+
+async function main() {
+    const contractAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+    const heirTwoAddress = "0x2546BcD3c84621e976D8185a91A922aE77ECEc30"
+    const signer = await ethers.getSigner(heirTwoAddress);
+
+    const wallegacy = await ethers.getContractAt("Wallegacy", contractAddress)
+
+
+    const isWaitingHeir = await wallegacy.connect(signer).isWaitingHeir();
+    console.log(isWaitingHeir)
 }
 
 main()
