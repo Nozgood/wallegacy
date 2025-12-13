@@ -1,8 +1,53 @@
 name: Slither Analysis
-on: [push]
+
+on:
+    push:
+        branches: ["**"]
+    pull_request:
+        branches: ["**"]
+
 jobs:
-    analyze:
+    slither:
         runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: ./backend
+
         steps:
-            - uses: actions/checkout@v4
-            - uses: crytic/slither-action@v0.4.1
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Setup Node v22
+              uses: actions/setup-node@v6
+              with:
+                  node-version: 22.15.0
+
+            - name: Install dependencies
+              run: npm ci
+
+            - name: Setup Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: "3.11"
+
+            - name: Install Slither
+              run: |
+                  pip3 install slither-analyzer
+                  pip3 install solc-select
+
+            # - name: Install and configure solc
+            #   run: |
+            #       solc-select install 0.8.30
+            #       solc-select use 0.8.30
+
+            - name: Run Slither Analysis
+              run: slither contracts/Wallegacy.sol --config-file slither.config.json --print human-summary
+
+            # - name: Run Slither Security Check
+            #   run: |
+            #       slither contracts/Wallegacy.sol \
+            #         --config-file slither.config.json \
+            #         --exclude-informational \
+            #         --exclude-low \
+            #         --exclude-optimization \
+            #         --fail-on high
