@@ -9,6 +9,10 @@ on:
 jobs:
     slither:
         runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: ./backend
+
         steps:
             - name: Checkout code
               uses: actions/checkout@v4
@@ -19,7 +23,6 @@ jobs:
                   node-version: 22.15.0
 
             - name: Install dependencies
-              working-directory: ./backend
               run: npm ci
 
             - name: Setup Python
