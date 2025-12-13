@@ -76,6 +76,7 @@ contract Wallegacy is Ownable {
     error Wallegacy__NoCancelPossible();
     error Wallegacy__TestatorHeir();
     error Wallegacy__NotaryAlreadyRegistered();
+    error Wallegacy__NoWaitingHeir();
 
     constructor() Ownable(msg.sender) {}
 
@@ -100,6 +101,12 @@ contract Wallegacy is Ownable {
         if (address(sbtContract) == address(0)) {
             revert WallegacySBT__NotSet();
         }
+        _;
+    }
+
+    modifier onlyWaitingHeir() {
+        if (s_waitingHeirs[msg.sender] == false)
+            revert Wallegacy__NoWaitingHeir();
         _;
     }
 
@@ -185,13 +192,11 @@ contract Wallegacy is Ownable {
             revert Wallegacy__WillAlreadySet(testatorAddress);
         }
 
-        Heir[] memory newHeirs;
-
         s_testatorToWill[testatorAddress] = Will({
             testator: testatorAddress,
             status: WillStatus.DRAFT,
             exists: true,
-            heirs: newHeirs,
+            heirs: new Heir[](0),
             notary: msg.sender,
             index: s_notaryToTestators[msg.sender].length
         });
@@ -199,9 +204,9 @@ contract Wallegacy is Ownable {
         registerTestator(testatorAddress);
 
         s_notaryToTestators[msg.sender].push(testatorAddress);
-        sbtContract.mint(testatorAddress);
-
         emit NotaryNewWill(msg.sender, testatorAddress);
+
+        sbtContract.mint(testatorAddress);
     }
 
     function setUpWill(
@@ -221,6 +226,8 @@ contract Wallegacy is Ownable {
         }
 
         uint8 totalPercent = 0;
+        uint256 remaining = msg.value;
+
         for (uint256 i = 0; i < heirsParams.length; i++) {
             if (heirsParams[i].heirAddress == address(0)) {
                 revert Wallegacy__HeirWithoutAddress(i);
@@ -230,7 +237,7 @@ contract Wallegacy is Ownable {
                 revert Wallegacy__TestatorHeir();
             }
 
-            heirsParams[i].legacy = (msg.value * heirsParams[i].percent) / 100;
+            heirsParams[i].legacy = (remaining * heirsParams[i].percent) / 100;
             totalPercent += heirsParams[i].percent;
         }
 
@@ -271,7 +278,9 @@ contract Wallegacy is Ownable {
             testators[testatorIndex] = lastTestator;
             s_testatorToWill[lastTestator].index = testatorIndex;
         }
+
         testators.pop();
+        emit WillCancelled(msg.sender);
 
         sbtContract.burn(msg.sender);
 
@@ -283,8 +292,6 @@ contract Wallegacy is Ownable {
                 revert Wallegacy__RefundFailed(msg.sender);
             }
         }
-
-        emit WillCancelled(msg.sender);
     }
 
     function triggerLegacyProcess(address testatorAddress) public onlyNotary {
@@ -309,11 +316,13 @@ contract Wallegacy is Ownable {
             revert Wallegacy__NoLegacy(testatorAddress);
         }
 
+        bool heirValid = false;
+        uint256 heirLegacy = 0;
         for (uint256 i = 0; i < testatorWill.heirs.length; i++) {
             Heir storage heir = testatorWill.heirs[i];
             if (heir.heirAddress == msg.sender) {
                 s_waitingHeirs[msg.sender] = false;
-                uint256 legacy = heir.legacy;
+                heirLegacy = heir.legacy;
 
                 if (testatorWill.heirs.length > 1) {
                     testatorWill.heirs[i] = testatorWill.heirs[
@@ -322,26 +331,32 @@ contract Wallegacy is Ownable {
                 }
 
                 testatorWill.heirs.pop();
-                s_waitingHeirs[heir.heirAddress] = false;
-                s_testatorToValueLocked[testatorAddress] -= legacy;
-
-                (bool success, ) = msg.sender.call{value: legacy}("");
-                if (!success) {
-                    revert Wallegacy__ErrorSendingLegacy(
-                        testatorAddress,
-                        msg.sender,
-                        legacy
-                    );
+                if (testatorWill.heirs.length == 0) {
+                    testatorWill.status = WillStatus.DONE;
                 }
 
+                s_waitingHeirs[heir.heirAddress] = false;
+                s_testatorToValueLocked[testatorAddress] -= heirLegacy;
+
+                heirValid = true;
+
                 emit LegacySentToHeir(msg.sender);
+                if (testatorWill.heirs.length == 0) {
+                    emit LegacyDone(testatorAddress);
+                }
                 break;
             }
         }
 
-        if (testatorWill.heirs.length == 0) {
-            testatorWill.status = WillStatus.DONE;
-            emit LegacyDone(testatorAddress);
+        if (heirValid) {
+            (bool success, ) = msg.sender.call{value: heirLegacy}("");
+            if (!success) {
+                revert Wallegacy__ErrorSendingLegacy(
+                    testatorAddress,
+                    msg.sender,
+                    heirLegacy
+                );
+            }
         }
     }
 }

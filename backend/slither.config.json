@@ -1,0 +1,9 @@
+{
+  "filter_paths": "node_modules",
+  "solc_remaps": [
+    "@openzeppelin/contracts=node_modules/@openzeppelin/contracts"
+  ],
+  "hardhat_cache_directory": "cache",
+  "hardhat_artifacts_directory": "artifacts",
+  "solc_args": "--via-ir --optimize"
+}
