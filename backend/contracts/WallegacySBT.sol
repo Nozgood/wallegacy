@@ -15,6 +15,7 @@ contract WallegacySBT is ERC721 {
     event SBTBurned(address indexed testatorAddress, uint256 indexed tokenID);
 
     // errors
+    error WallegacySBT__WallegacyNotSet();
     error SBT__NoWallegacyContract();
     error SBT__TestatorAlreadyHasSBT(address testatorAddress);
     error SBT_NoSBTFound(address testatorAddress);
@@ -29,15 +30,16 @@ contract WallegacySBT is ERC721 {
 
     constructor(
         string memory baseTokenURI,
-        address _wallegacyContract
+        address wallegacyAddress
     ) ERC721("Wallegacy", "WLSBT") {
         _baseTokenURI = baseTokenURI;
-        wallegacyContract = _wallegacyContract;
+
+        if (wallegacyAddress == address(0))
+            revert WallegacySBT__WallegacyNotSet();
+        wallegacyContract = wallegacyAddress;
     }
 
-    function mint(
-        address testatorAddress
-    ) external onlyWallegacyContract returns (uint256) {
+    function mint(address testatorAddress) external onlyWallegacyContract {
         if (balanceOf(testatorAddress) != 0) {
             revert SBT__TestatorAlreadyHasSBT(testatorAddress);
         }
@@ -46,8 +48,6 @@ contract WallegacySBT is ERC721 {
 
         _safeMint(testatorAddress, tokenID);
         emit SBTMinted(testatorAddress, tokenID);
-
-        return tokenID;
     }
 
     function burn(address testatorAddress) external onlyWallegacyContract {

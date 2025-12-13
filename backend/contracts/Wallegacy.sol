@@ -192,13 +192,11 @@ contract Wallegacy is Ownable {
             revert Wallegacy__WillAlreadySet(testatorAddress);
         }
 
-        Heir[] memory newHeirs;
-
         s_testatorToWill[testatorAddress] = Will({
             testator: testatorAddress,
             status: WillStatus.DRAFT,
             exists: true,
-            heirs: newHeirs,
+            heirs: new Heir[](0),
             notary: msg.sender,
             index: s_notaryToTestators[msg.sender].length
         });
@@ -206,9 +204,9 @@ contract Wallegacy is Ownable {
         registerTestator(testatorAddress);
 
         s_notaryToTestators[msg.sender].push(testatorAddress);
-        sbtContract.mint(testatorAddress);
-
         emit NotaryNewWill(msg.sender, testatorAddress);
+
+        sbtContract.mint(testatorAddress);
     }
 
     function setUpWill(
@@ -280,7 +278,9 @@ contract Wallegacy is Ownable {
             testators[testatorIndex] = lastTestator;
             s_testatorToWill[lastTestator].index = testatorIndex;
         }
+
         testators.pop();
+        emit WillCancelled(msg.sender);
 
         sbtContract.burn(msg.sender);
 
@@ -292,8 +292,6 @@ contract Wallegacy is Ownable {
                 revert Wallegacy__RefundFailed(msg.sender);
             }
         }
-
-        emit WillCancelled(msg.sender);
     }
 
     function triggerLegacyProcess(address testatorAddress) public onlyNotary {
@@ -318,11 +316,13 @@ contract Wallegacy is Ownable {
             revert Wallegacy__NoLegacy(testatorAddress);
         }
 
+        bool heirValid = false;
+        uint256 heirLegacy = 0;
         for (uint256 i = 0; i < testatorWill.heirs.length; i++) {
             Heir storage heir = testatorWill.heirs[i];
             if (heir.heirAddress == msg.sender) {
                 s_waitingHeirs[msg.sender] = false;
-                uint256 legacy = heir.legacy;
+                heirLegacy = heir.legacy;
 
                 if (testatorWill.heirs.length > 1) {
                     testatorWill.heirs[i] = testatorWill.heirs[
@@ -336,24 +336,27 @@ contract Wallegacy is Ownable {
                 }
 
                 s_waitingHeirs[heir.heirAddress] = false;
-                s_testatorToValueLocked[testatorAddress] -= legacy;
+                s_testatorToValueLocked[testatorAddress] -= heirLegacy;
 
-                (bool success, ) = msg.sender.call{value: legacy}("");
-                if (!success) {
-                    revert Wallegacy__ErrorSendingLegacy(
-                        testatorAddress,
-                        msg.sender,
-                        legacy
-                    );
-                }
+                heirValid = true;
 
                 emit LegacySentToHeir(msg.sender);
+                if (testatorWill.heirs.length == 0) {
+                    emit LegacyDone(testatorAddress);
+                }
                 break;
             }
         }
 
-        if (testatorWill.heirs.length == 0) {
-            emit LegacyDone(testatorAddress);
+        if (heirValid) {
+            (bool success, ) = msg.sender.call{value: heirLegacy}("");
+            if (!success) {
+                revert Wallegacy__ErrorSendingLegacy(
+                    testatorAddress,
+                    msg.sender,
+                    heirLegacy
+                );
+            }
         }
     }
 }
