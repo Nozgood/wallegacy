@@ -76,6 +76,7 @@ contract Wallegacy is Ownable {
     error Wallegacy__NoCancelPossible();
     error Wallegacy__TestatorHeir();
     error Wallegacy__NotaryAlreadyRegistered();
+    error Wallegacy__NoWaitingHeir();
 
     constructor() Ownable(msg.sender) {}
 
@@ -100,6 +101,12 @@ contract Wallegacy is Ownable {
         if (address(sbtContract) == address(0)) {
             revert WallegacySBT__NotSet();
         }
+        _;
+    }
+
+    modifier onlyWaitingHeir() {
+        if (s_waitingHeirs[msg.sender] == false)
+            revert Wallegacy__NoWaitingHeir();
         _;
     }
 
@@ -221,6 +228,8 @@ contract Wallegacy is Ownable {
         }
 
         uint8 totalPercent = 0;
+        uint256 remaining = msg.value;
+
         for (uint256 i = 0; i < heirsParams.length; i++) {
             if (heirsParams[i].heirAddress == address(0)) {
                 revert Wallegacy__HeirWithoutAddress(i);
@@ -230,7 +239,7 @@ contract Wallegacy is Ownable {
                 revert Wallegacy__TestatorHeir();
             }
 
-            heirsParams[i].legacy = (msg.value * heirsParams[i].percent) / 100;
+            heirsParams[i].legacy = (remaining * heirsParams[i].percent) / 100;
             totalPercent += heirsParams[i].percent;
         }
 
@@ -322,6 +331,10 @@ contract Wallegacy is Ownable {
                 }
 
                 testatorWill.heirs.pop();
+                if (testatorWill.heirs.length == 0) {
+                    testatorWill.status = WillStatus.DONE;
+                }
+
                 s_waitingHeirs[heir.heirAddress] = false;
                 s_testatorToValueLocked[testatorAddress] -= legacy;
 
@@ -340,7 +353,6 @@ contract Wallegacy is Ownable {
         }
 
         if (testatorWill.heirs.length == 0) {
-            testatorWill.status = WillStatus.DONE;
             emit LegacyDone(testatorAddress);
         }
     }
