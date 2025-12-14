@@ -49,7 +49,7 @@ contract Wallegacy is Ownable {
     event NotaryRegistered(address indexed notaryAddress);
     event TestatorRegistered(address indexed testatorAddress);
     event LegacyDone(address indexed testatorAddress);
-    event Wallegacy__TriggerLegacyProcess(address indexed testatorAddress);
+    event TriggerLegacyProcess(address indexed testatorAddress);
 
     error Wallegacy__WillNotFound(address testatorAddress);
     error Wallegacy__NoHeirs();
@@ -158,7 +158,7 @@ contract Wallegacy is Ownable {
     }
 
     function registerNotary(address notaryAddress) public onlyOwner {
-        if (s_notaries[notaryAddress] == true) {
+        if (s_notaries[notaryAddress]) {
             revert Wallegacy__NotaryAlreadyRegistered();
         }
 
@@ -306,10 +306,10 @@ contract Wallegacy is Ownable {
             s_waitingHeirs[heir.heirAddress] = true;
         }
 
-        emit Wallegacy__TriggerLegacyProcess(testatorAddress);
+        emit TriggerLegacyProcess(testatorAddress);
     }
 
-    function claimLegacy(address testatorAddress) public {
+    function claimLegacy(address testatorAddress) public onlyWaitingHeir {
         Will storage testatorWill = s_testatorToWill[testatorAddress];
         if (!testatorWill.exists) {
             revert Wallegacy__NoLegacy(testatorAddress);
