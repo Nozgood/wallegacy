@@ -375,7 +375,7 @@ describe("Wallegacy triggerLegacyProcess", async function () {
 
             it("should set will status to WAITING_LEGACY and mark heir as waiting", async function () {
                 await expect(wallegacy.connect(notaryAddress).triggerLegacyProcess(testatorAddress))
-                    .to.emit(wallegacy, "Wallegacy__TriggerLegacyProcess").withArgs(testatorAddress);
+                    .to.emit(wallegacy, "TriggerLegacyProcess").withArgs(testatorAddress);
 
                 const will: Wallegacy.WillStructOutput = await wallegacy.connect(testatorAddress).getWill();
                 expect(will.status).to.equal(2); // WillStatus.WAITING_LEGACY
@@ -418,7 +418,7 @@ describe("Wallegacy triggerLegacyProcess", async function () {
 
             it("should allow any registered notary to trigger the process", async function () {
                 await expect(wallegacy.connect(anotherNotaryAddress).triggerLegacyProcess(testatorAddress))
-                    .to.emit(wallegacy, "Wallegacy__TriggerLegacyProcess").withArgs(testatorAddress);
+                    .to.emit(wallegacy, "TriggerLegacyProcess").withArgs(testatorAddress);
             });
         });
     });
@@ -648,7 +648,7 @@ describe("special cases", function () {
     })
 
     describe("the testator setup its will, cancel his will and re-start another will", function () {
-        it.only("should process correctly", async function () {
+        it("should process correctly", async function () {
             const heirs: Wallegacy.HeirStruct[] = [
                 { heirAddress: heirOneAddress, percent: 50, legacy: 0 },
                 { heirAddress: heirTwoAddress, percent: 50, legacy: 0 },
