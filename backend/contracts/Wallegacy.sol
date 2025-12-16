@@ -65,7 +65,6 @@ contract Wallegacy is Ownable {
     event WillSetUp(address indexed testator);
     event TestatorValueLocked(address indexed testator, uint256 amount);
     event LegacySentToHeir(address indexed heirAddress);
-    event LegacySent(address indexed testatorAddress);
     event WillCancelled(address indexed testatorAddress);
     event SBTContractSet(address indexed sbtAddess);
     event NotaryNewWill(
@@ -82,8 +81,6 @@ contract Wallegacy is Ownable {
     error Wallegacy__HeirWithoutAddress(uint256 heirIndex);
     error Wallegacy__NewWillNotGoodPercent(uint8 percent);
     error Wallegacy__NotEnoughAmount();
-    error Wallegacy__WillStatusNotCorrect();
-    error Wallegacy__WillNoValueLocked(address testatorAddress);
     error Wallegacy__ErrorSendingLegacy(
         address testatorAddress,
         address heirAddress,
@@ -91,7 +88,6 @@ contract Wallegacy is Ownable {
     );
 
     error Wallegacy__NoTestator(address sender);
-    error Wallegacy__NoTestatorNoNotary(address sender);
     error WallegacySBT__NoAddress();
     error WallegacySBT__NotSet();
     error Wallegacy__Unauthorized();
@@ -105,6 +101,7 @@ contract Wallegacy is Ownable {
     error Wallegacy__NoWaitingHeir();
     error Wallegacy__AlreadyTestator(address testatorAddress);
     error WallegacySBT__AlreadySet();
+    error Wallegacy__WillAlreadySaved();
 
     constructor() Ownable(msg.sender) {}
 
@@ -340,6 +337,10 @@ contract Wallegacy is Ownable {
         Will storage testatorWill = s_testatorToWill[msg.sender];
         if (!testatorWill.exists) {
             revert Wallegacy__TestatorWithoutWill(msg.sender);
+        }
+
+        if (testatorWill.status == WillStatus.SAVED) {
+            revert Wallegacy__WillAlreadySaved();
         }
 
         uint8 totalPercent = 0;
